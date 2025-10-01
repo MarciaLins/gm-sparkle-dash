@@ -50,28 +50,22 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Hero Section with Video Background */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 bg-black">
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="w-full h-full object-cover opacity-50"
-          >
-            <source src="https://assets.mixkit.co/videos/preview/mixkit-violinist-playing-in-a-concert-hall-49995-large.mp4" type="video/mp4" />
-          </video>
+      {/* Header Section */}
+      <header className="bg-card border-b border-border py-6 px-4 md:px-8">
+        <div className="max-w-7xl mx-auto flex items-center gap-6">
+          <div className="w-16 h-16 bg-accent/10 rounded-lg flex items-center justify-center border border-accent/20">
+            <span className="text-2xl font-bold text-accent">FL</span>
+          </div>
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-accent to-amber-400 bg-clip-text text-transparent">
+              Filipe Lima
+            </h1>
+            <p className="text-sm md:text-base text-muted-foreground">
+              Violinista | A Trilha Sonora Perfeita para o Seu Momento Inesquecível
+            </p>
+          </div>
         </div>
-        <div className="relative z-10 text-center px-4 max-w-5xl">
-          <h1 className="text-6xl md:text-8xl font-bold mb-6 bg-gradient-to-r from-accent via-amber-400 to-accent bg-clip-text text-transparent animate-fade-in">
-            Filipe Lima
-          </h1>
-          <p className="text-xl md:text-3xl text-foreground/90 font-light">
-            Violinista | A Trilha Sonora Perfeita para o Seu Momento Inesquecível
-          </p>
-        </div>
-      </section>
+      </header>
 
       {/* About Section */}
       <section className="py-20 px-4 md:px-8 bg-card">
@@ -195,7 +189,7 @@ export default function Landing() {
 
           <div className="p-4 border-t border-border flex gap-2">
             <Input
-              placeholder="Digite sua mensagem..."
+              placeholder="Digite sua mensagem aqui..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={(e) => e.key === "Enter" && handleSend()}
