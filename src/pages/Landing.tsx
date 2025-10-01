@@ -56,7 +56,7 @@ export default function Landing() {
       {/* Header Section */}
       <header className="bg-card border-b border-border py-6 px-4 md:px-8">
         <div className="max-w-7xl mx-auto flex items-center gap-6">
-          <div className="w-16 h-16 rounded-lg overflow-hidden">
+          <div className="w-24 h-24 rounded-lg overflow-hidden">
             <img 
               src={logoFilipeLima} 
               alt="Filipe Lima Logo" 
@@ -75,8 +75,15 @@ export default function Landing() {
       </header>
 
       {/* About Section */}
-      <section className="py-20 px-4 md:px-8 bg-card">
-        <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center">
+      <section className="py-20 px-4 md:px-8 bg-card relative overflow-hidden">
+        <div className="absolute inset-0 flex items-center justify-center opacity-5">
+          <img 
+            src={logoFilipeLima} 
+            alt="Watermark" 
+            className="w-full max-w-2xl h-auto object-contain"
+          />
+        </div>
+        <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center relative z-10">
           <div className="order-2 md:order-1">
             <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-accent to-amber-400 bg-clip-text text-transparent">
               Sobre Filipe Lima
