@@ -75,28 +75,28 @@ export default function Landing() {
       </header>
 
       {/* About Section */}
-      <section className="py-20 px-4 md:px-8 bg-card relative overflow-hidden">
-        <div className="absolute inset-0 flex items-center justify-center opacity-5">
-          <img 
-            src={logoFilipeLima} 
-            alt="Watermark" 
-            className="w-full max-w-2xl h-auto object-contain"
-          />
-        </div>
-        <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center relative z-10">
-          <div className="order-2 md:order-1">
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-accent to-amber-400 bg-clip-text text-transparent">
+      <section className="py-20 px-4 md:px-8 bg-card">
+        <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center">
+          <div className="order-2 md:order-1 relative">
+            <div className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none">
+              <img 
+                src={logoFilipeLima} 
+                alt="Watermark" 
+                className="w-full h-auto object-contain"
+              />
+            </div>
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-accent to-amber-400 bg-clip-text text-transparent relative z-10">
               Sobre Filipe Lima
             </h2>
-            <p className="text-lg text-muted-foreground leading-relaxed mb-4">
+            <p className="text-lg text-muted-foreground leading-relaxed mb-4 relative z-10">
               Com mais de 13 anos de experiência, Filipe Lima é um violinista renomado que já encantou
               milhares de pessoas em casamentos, eventos corporativos e apresentações especiais.
             </p>
-            <p className="text-lg text-muted-foreground leading-relaxed mb-4">
+            <p className="text-lg text-muted-foreground leading-relaxed mb-4 relative z-10">
               Sua versatilidade musical abrange desde o clássico erudito até músicas contemporâneas,
               sempre com a elegância e sensibilidade que transformam momentos em memórias inesquecíveis.
             </p>
-            <p className="text-lg text-muted-foreground leading-relaxed">
+            <p className="text-lg text-muted-foreground leading-relaxed relative z-10">
               Cada apresentação é cuidadosamente personalizada para refletir a essência do seu evento,
               criando uma atmosfera única e sofisticada.
             </p>
