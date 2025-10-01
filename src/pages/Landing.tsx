@@ -155,13 +155,18 @@ export default function Landing() {
       </section>
 
       {/* Floating Chat Button */}
-      <Button
-        onClick={() => setChatOpen(true)}
-        size="icon"
-        className="fixed bottom-6 right-6 h-16 w-16 rounded-full bg-gradient-to-r from-accent to-amber-400 hover:shadow-[0_0_40px_rgba(252,211,77,0.4)] transition-all duration-300 z-50"
-      >
-        <MessageCircle className="h-8 w-8 text-primary-foreground" />
-      </Button>
+      <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3">
+        <div className="bg-accent text-accent-foreground px-4 py-2 rounded-lg shadow-lg animate-fade-in hidden md:block">
+          <p className="text-sm font-medium whitespace-nowrap">Converse com a Sofia!</p>
+        </div>
+        <Button
+          onClick={() => setChatOpen(true)}
+          size="icon"
+          className="h-20 w-20 rounded-full bg-gradient-to-r from-accent to-amber-400 hover:shadow-[0_0_40px_rgba(252,211,77,0.6)] transition-all duration-300 hover:scale-110"
+        >
+          <MessageCircle className="h-10 w-10 text-primary-foreground" />
+        </Button>
+      </div>
 
       {/* Chat Dialog */}
       <Dialog open={chatOpen} onOpenChange={setChatOpen}>
