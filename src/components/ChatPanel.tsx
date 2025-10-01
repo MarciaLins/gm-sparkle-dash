@@ -2,8 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Send } from "lucide-react";
-import { useState } from "react";
+import { Send, Mic, Paperclip } from "lucide-react";
+import { useState, useRef } from "react";
 
 interface Message {
   id: number;
@@ -22,6 +22,20 @@ export const ChatPanel = () => {
     },
   ]);
   const [input, setInput] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      // Placeholder para futura implementação de upload
+      console.log("Arquivos selecionados:", files);
+    }
+  };
+
+  const handleMicClick = () => {
+    // Placeholder para futura implementação de gravação de áudio
+    console.log("Gravação de áudio iniciada");
+  };
 
   const handleSend = () => {
     if (input.trim()) {
@@ -84,6 +98,30 @@ export const ChatPanel = () => {
           </div>
         </ScrollArea>
         <div className="flex gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            onChange={handleFileUpload}
+            accept="image/*,.pdf,.doc,.docx"
+            multiple
+          />
+          <Button
+            onClick={() => fileInputRef.current?.click()}
+            size="icon"
+            variant="ghost"
+            className="shrink-0"
+          >
+            <Paperclip className="h-4 w-4" />
+          </Button>
+          <Button
+            onClick={handleMicClick}
+            size="icon"
+            variant="ghost"
+            className="shrink-0"
+          >
+            <Mic className="h-4 w-4" />
+          </Button>
           <Input
             placeholder="Digite sua mensagem..."
             value={input}
