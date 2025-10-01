@@ -75,7 +75,7 @@ export default function Landing() {
               Sobre Filipe Lima
             </h2>
             <p className="text-lg text-muted-foreground leading-relaxed mb-4">
-              Com mais de 15 anos de experiência, Filipe Lima é um violinista renomado que já encantou
+              Com mais de 13 anos de experiência, Filipe Lima é um violinista renomado que já encantou
               milhares de pessoas em casamentos, eventos corporativos e apresentações especiais.
             </p>
             <p className="text-lg text-muted-foreground leading-relaxed mb-4">
