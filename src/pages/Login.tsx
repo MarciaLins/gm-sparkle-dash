@@ -1,9 +1,9 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { Mail } from "lucide-react";
 import { z } from "zod";
 
@@ -11,12 +11,15 @@ const emailSchema = z.object({
   email: z.string().trim().email({ message: "Email inválido" }),
 });
 
+const AUTHORIZED_EMAIL = "filipecc2002@gmail.com";
+
 const Login = () => {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
-  const handleMagicLink = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Validate email
@@ -32,28 +35,22 @@ const Login = () => {
 
     setIsLoading(true);
 
-    try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email: email.trim(),
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-        },
-      });
-
-      if (error) throw error;
-
+    // Check if email is authorized
+    if (email.trim().toLowerCase() === AUTHORIZED_EMAIL.toLowerCase()) {
       toast({
-        title: "Link enviado!",
-        description: "Verifique seu email para acessar o painel.",
+        title: "Acesso autorizado!",
+        description: "Redirecionando para o painel...",
       });
-      setEmail("");
-    } catch (error: any) {
+      
+      setTimeout(() => {
+        navigate("/");
+      }, 1000);
+    } else {
       toast({
-        title: "Erro ao enviar link",
-        description: error.message || "Tente novamente mais tarde.",
+        title: "Acesso negado",
+        description: "Este email não está autorizado.",
         variant: "destructive",
       });
-    } finally {
       setIsLoading(false);
     }
   };
@@ -71,7 +68,7 @@ const Login = () => {
             </p>
           </div>
 
-          <form onSubmit={handleMagicLink} className="space-y-6">
+          <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="email" className="text-foreground">
                 Email
@@ -96,12 +93,12 @@ const Login = () => {
               className="w-full bg-gradient-to-r from-accent to-amber-400 hover:shadow-[0_0_30px_rgba(252,211,77,0.4)] transition-all duration-300"
               disabled={isLoading}
             >
-              {isLoading ? "Enviando..." : "Enviar Link de Acesso"}
+              {isLoading ? "Verificando..." : "Acessar Painel"}
             </Button>
           </form>
 
           <div className="mt-6 text-center text-sm text-muted-foreground">
-            O link de acesso será válido por 1 hora
+            Apenas emails autorizados têm acesso
           </div>
         </div>
       </div>
