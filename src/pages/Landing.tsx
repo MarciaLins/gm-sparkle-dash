@@ -95,9 +95,9 @@ export default function Landing() {
           </div>
           <div className="order-1 md:order-2">
             <div className="relative aspect-[3/4] rounded-lg overflow-hidden shadow-[0_0_40px_rgba(252,211,77,0.2)]">
-              <video
-                src={filipeLimaVideo}
-                controls
+              <img
+                src="https://images.unsplash.com/photo-1465847899084-d164df4dedc6?auto=format&fit=crop&w=800&q=80"
+                alt="Filipe Lima Violinista"
                 className="w-full h-full object-cover"
               />
             </div>
