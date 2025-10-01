@@ -4,21 +4,29 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Search } from "lucide-react";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const Clientes = () => {
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Mock data - substituir por dados reais do Supabase
-  const clientes = [
-    { id: 1, nome: "João Silva", telefone: "(11) 98765-4321", email: "joao@email.com" },
-    { id: 2, nome: "Maria Santos", telefone: "(11) 91234-5678", email: "maria@email.com" },
-    { id: 3, nome: "Carlos Oliveira", telefone: "(11) 99876-5432", email: "carlos@email.com" },
-  ];
+  const { data: clientes } = useQuery({
+    queryKey: ['clientes'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('clientes')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    }
+  });
 
-  const filteredClientes = clientes.filter((cliente) =>
-    cliente.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    cliente.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    cliente.telefone.includes(searchTerm)
+  const filteredClientes = (clientes || []).filter((cliente) =>
+    (cliente.nome_cliente?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+    (cliente.email_contato?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+    (cliente.telefone_contato || '').includes(searchTerm)
   );
 
   return (
@@ -52,13 +60,21 @@ const Clientes = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredClientes.map((cliente) => (
-                  <TableRow key={cliente.id}>
-                    <TableCell className="font-medium">{cliente.nome}</TableCell>
-                    <TableCell>{cliente.telefone}</TableCell>
-                    <TableCell>{cliente.email}</TableCell>
+                {filteredClientes.length > 0 ? (
+                  filteredClientes.map((cliente) => (
+                    <TableRow key={cliente.id}>
+                      <TableCell className="font-medium">{cliente.nome_cliente}</TableCell>
+                      <TableCell>{cliente.telefone_contato}</TableCell>
+                      <TableCell>{cliente.email_contato}</TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-center text-muted-foreground py-8">
+                      Nenhum cliente encontrado
+                    </TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
           </CardContent>

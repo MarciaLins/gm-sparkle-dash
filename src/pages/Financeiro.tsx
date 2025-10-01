@@ -9,18 +9,86 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DollarSign, TrendingDown, TrendingUp, Plus } from "lucide-react";
 import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
+import { format } from "date-fns";
 
 const Financeiro = () => {
   const [open, setOpen] = useState(false);
   const [mesFilter, setMesFilter] = useState("todos");
   const [categoriaFilter, setCategoriaFilter] = useState("todos");
+  const [descricao, setDescricao] = useState("");
+  const [valor, setValor] = useState("");
+  const [tipo, setTipo] = useState("");
+  const queryClient = useQueryClient();
 
-  // Mock data - substituir por dados reais do Supabase
-  const transacoes = [
-    { id: 1, data: "2025-01-15", descricao: "Casamento Silva", categoria: "Receita", valor: "R$ 5.000,00", tipo: "receita" },
-    { id: 2, data: "2025-01-20", descricao: "Equipamento Fotográfico", categoria: "Despesa", valor: "R$ 1.200,00", tipo: "despesa" },
-    { id: 3, data: "2025-02-05", descricao: "Formatura", categoria: "Receita", valor: "R$ 3.500,00", tipo: "receita" },
-  ];
+  const { data: transacoes } = useQuery({
+    queryKey: ['financeiro', mesFilter, categoriaFilter],
+    queryFn: async () => {
+      let query = supabase
+        .from('financeiro')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (categoriaFilter !== 'todos') {
+        query = query.eq('tipo', categoriaFilter);
+      }
+
+      const { data, error } = await query;
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  const addTransacao = useMutation({
+    mutationFn: async (novaTransacao: { descricao: string; valor: number; tipo: string; categoria: string }) => {
+      const { error } = await supabase
+        .from('financeiro')
+        .insert([novaTransacao]);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['financeiro'] });
+      queryClient.invalidateQueries({ queryKey: ['financeiro-dashboard'] });
+      toast({ title: "Transação adicionada com sucesso!" });
+      setOpen(false);
+      setDescricao("");
+      setValor("");
+      setTipo("");
+    },
+    onError: () => {
+      toast({ title: "Erro ao adicionar transação", variant: "destructive" });
+    }
+  });
+
+  const handleSave = () => {
+    if (!descricao || !valor || !tipo) {
+      toast({ title: "Preencha todos os campos", variant: "destructive" });
+      return;
+    }
+
+    const valorNumerico = parseFloat(valor.replace(/[^\d,]/g, '').replace(',', '.'));
+    
+    addTransacao.mutate({
+      descricao,
+      valor: valorNumerico,
+      tipo,
+      categoria: tipo === 'receita' ? 'Receita' : 'Despesa'
+    });
+  };
+
+  const receitaTotal = transacoes
+    ?.filter(t => t.tipo === 'receita')
+    .reduce((sum, t) => sum + (Number(t.valor) || 0), 0) || 0;
+
+  const despesaTotal = transacoes
+    ?.filter(t => t.tipo === 'despesa')
+    .reduce((sum, t) => sum + (Number(t.valor) || 0), 0) || 0;
+
+  const lucroTotal = receitaTotal - despesaTotal;
 
   return (
     <Layout>
@@ -35,17 +103,17 @@ const Financeiro = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <MetricCard
             title="Receita Total (Ano)"
-            value="R$ 285.600"
+            value={`R$ ${receitaTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
             icon={TrendingUp}
           />
           <MetricCard
             title="Despesa Total (Ano)"
-            value="R$ 142.800"
+            value={`R$ ${despesaTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
             icon={TrendingDown}
           />
           <MetricCard
             title="Lucro Líquido (Ano)"
-            value="R$ 142.800"
+            value={`R$ ${lucroTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
             icon={DollarSign}
           />
         </div>
@@ -92,15 +160,25 @@ const Financeiro = () => {
                     <div className="space-y-4 mt-4">
                       <div>
                         <Label htmlFor="descricao">Descrição</Label>
-                        <Input id="descricao" placeholder="Descrição da transação" />
+                        <Input 
+                          id="descricao" 
+                          placeholder="Descrição da transação" 
+                          value={descricao}
+                          onChange={(e) => setDescricao(e.target.value)}
+                        />
                       </div>
                       <div>
                         <Label htmlFor="valor">Valor</Label>
-                        <Input id="valor" placeholder="R$ 0,00" />
+                        <Input 
+                          id="valor" 
+                          placeholder="R$ 0,00" 
+                          value={valor}
+                          onChange={(e) => setValor(e.target.value)}
+                        />
                       </div>
                       <div>
                         <Label htmlFor="tipo">Tipo</Label>
-                        <Select>
+                        <Select value={tipo} onValueChange={setTipo}>
                           <SelectTrigger>
                             <SelectValue placeholder="Selecione" />
                           </SelectTrigger>
@@ -110,7 +188,10 @@ const Financeiro = () => {
                           </SelectContent>
                         </Select>
                       </div>
-                      <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
+                      <Button 
+                        onClick={handleSave}
+                        className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
+                      >
                         Salvar
                       </Button>
                     </div>
@@ -130,16 +211,24 @@ const Financeiro = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {transacoes.map((transacao) => (
-                  <TableRow key={transacao.id}>
-                    <TableCell>{transacao.data}</TableCell>
-                    <TableCell className="font-medium">{transacao.descricao}</TableCell>
-                    <TableCell>{transacao.categoria}</TableCell>
-                    <TableCell className={`text-right font-semibold ${transacao.tipo === 'receita' ? 'text-green-500' : 'text-red-500'}`}>
-                      {transacao.valor}
+                {transacoes && transacoes.length > 0 ? (
+                  transacoes.map((transacao) => (
+                    <TableRow key={transacao.id}>
+                      <TableCell>{format(new Date(transacao.created_at), 'dd/MM/yyyy')}</TableCell>
+                      <TableCell className="font-medium">{transacao.descricao}</TableCell>
+                      <TableCell>{transacao.categoria}</TableCell>
+                      <TableCell className={`text-right font-semibold ${transacao.tipo === 'receita' ? 'text-green-500' : 'text-red-500'}`}>
+                        R$ {Number(transacao.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                      Nenhuma transação encontrada
                     </TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
           </CardContent>

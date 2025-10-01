@@ -7,16 +7,65 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus } from "lucide-react";
 import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 const Equipe = () => {
   const [open, setOpen] = useState(false);
+  const [nome, setNome] = useState("");
+  const [funcao, setFuncao] = useState("");
+  const [valor, setValor] = useState("");
+  const queryClient = useQueryClient();
 
-  // Mock data - substituir por dados reais do Supabase
-  const equipe = [
-    { id: 1, nome: "Pedro Fotógrafo", funcao: "Fotógrafo Principal", valor_padrao: "R$ 800,00" },
-    { id: 2, nome: "Ana Videomaker", funcao: "Cinegrafista", valor_padrao: "R$ 900,00" },
-    { id: 3, nome: "Lucas Drone", funcao: "Operador de Drone", valor_padrao: "R$ 600,00" },
-  ];
+  const { data: equipe } = useQuery({
+    queryKey: ['equipe'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('equipe')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  const addMembro = useMutation({
+    mutationFn: async (novoMembro: { nome_membro: string; funcao_membro: string; valor_pagamento: number }) => {
+      const { error } = await supabase
+        .from('equipe')
+        .insert([novoMembro]);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['equipe'] });
+      toast({ title: "Membro adicionado com sucesso!" });
+      setOpen(false);
+      setNome("");
+      setFuncao("");
+      setValor("");
+    },
+    onError: () => {
+      toast({ title: "Erro ao adicionar membro", variant: "destructive" });
+    }
+  });
+
+  const handleSave = () => {
+    if (!nome || !funcao || !valor) {
+      toast({ title: "Preencha todos os campos", variant: "destructive" });
+      return;
+    }
+
+    const valorNumerico = parseFloat(valor.replace(/[^\d,]/g, '').replace(',', '.'));
+    
+    addMembro.mutate({
+      nome_membro: nome,
+      funcao_membro: funcao,
+      valor_pagamento: valorNumerico
+    });
+  };
 
   return (
     <Layout>
@@ -41,17 +90,35 @@ const Equipe = () => {
               <div className="space-y-4 mt-4">
                 <div>
                   <Label htmlFor="nome">Nome</Label>
-                  <Input id="nome" placeholder="Nome do membro" />
+                  <Input 
+                    id="nome" 
+                    placeholder="Nome do membro" 
+                    value={nome}
+                    onChange={(e) => setNome(e.target.value)}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="funcao">Função</Label>
-                  <Input id="funcao" placeholder="Ex: Fotógrafo, Cinegrafista" />
+                  <Input 
+                    id="funcao" 
+                    placeholder="Ex: Fotógrafo, Cinegrafista" 
+                    value={funcao}
+                    onChange={(e) => setFuncao(e.target.value)}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="valor">Valor Padrão</Label>
-                  <Input id="valor" placeholder="R$ 0,00" />
+                  <Input 
+                    id="valor" 
+                    placeholder="R$ 0,00" 
+                    value={valor}
+                    onChange={(e) => setValor(e.target.value)}
+                  />
                 </div>
-                <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
+                <Button 
+                  onClick={handleSave}
+                  className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
+                >
                   Salvar Membro
                 </Button>
               </div>
@@ -73,13 +140,21 @@ const Equipe = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {equipe.map((membro) => (
-                  <TableRow key={membro.id}>
-                    <TableCell className="font-medium">{membro.nome}</TableCell>
-                    <TableCell>{membro.funcao}</TableCell>
-                    <TableCell>{membro.valor_padrao}</TableCell>
+                {equipe && equipe.length > 0 ? (
+                  equipe.map((membro) => (
+                    <TableRow key={membro.id}>
+                      <TableCell className="font-medium">{membro.nome_membro}</TableCell>
+                      <TableCell>{membro.funcao_membro}</TableCell>
+                      <TableCell>R$ {Number(membro.valor_pagamento).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-center text-muted-foreground py-8">
+                      Nenhum membro cadastrado
+                    </TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
           </CardContent>

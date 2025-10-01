@@ -3,8 +3,46 @@ import { MetricCard } from "@/components/MetricCard";
 import { ChatPanel } from "@/components/ChatPanel";
 import { EventsAndTasks } from "@/components/EventsAndTasks";
 import { DollarSign, TrendingUp, Users } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
+  const { data: financeiro } = useQuery({
+    queryKey: ['financeiro-dashboard'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('financeiro')
+        .select('*')
+        .gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString());
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  const { data: clientes } = useQuery({
+    queryKey: ['clientes-count'],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('clientes')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString());
+      
+      if (error) throw error;
+      return count || 0;
+    }
+  });
+
+  const faturamentoMes = financeiro
+    ?.filter(t => t.tipo === 'receita')
+    .reduce((sum, t) => sum + (Number(t.valor) || 0), 0) || 0;
+
+  const despesasMes = financeiro
+    ?.filter(t => t.tipo === 'despesa')
+    .reduce((sum, t) => sum + (Number(t.valor) || 0), 0) || 0;
+
+  const lucroMes = faturamentoMes - despesasMes;
+
   return (
     <Layout>
       <div className="min-h-screen bg-background">
@@ -29,21 +67,18 @@ const Index = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <MetricCard
                   title="Faturamento (Mês)"
-                  value="R$ 125.400"
+                  value={`R$ ${faturamentoMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
                   icon={DollarSign}
-                  trend={{ value: "+12.5%", positive: true }}
                 />
                 <MetricCard
                   title="Lucro Líquido (Mês)"
-                  value="R$ 48.200"
+                  value={`R$ ${lucroMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
                   icon={TrendingUp}
-                  trend={{ value: "+8.3%", positive: true }}
                 />
                 <MetricCard
                   title="Novos Leads"
-                  value="34"
+                  value={clientes?.toString() || "0"}
                   icon={Users}
-                  trend={{ value: "+15.2%", positive: true }}
                 />
               </div>
 

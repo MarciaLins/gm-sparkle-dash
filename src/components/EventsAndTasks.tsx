@@ -2,33 +2,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, CheckCircle2, Circle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-
-const events = [
-  {
-    id: 1,
-    title: "Casamento Silva & Santos",
-    date: "15 Nov 2025",
-    time: "18:00",
-    location: "Espaço Natureza",
-    status: "Confirmado",
-  },
-  {
-    id: 2,
-    title: "Festa Corporativa Tech",
-    date: "22 Nov 2025",
-    time: "20:00",
-    location: "Hotel Premium",
-    status: "Pendente",
-  },
-  {
-    id: 3,
-    title: "Aniversário 15 Anos",
-    date: "30 Nov 2025",
-    time: "19:00",
-    location: "Chácara Feliz",
-    status: "Confirmado",
-  },
-];
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 const tasks = [
   { id: 1, title: "Confirmar buffet para evento Silva", completed: false, priority: "Alta" },
@@ -39,6 +16,21 @@ const tasks = [
 ];
 
 export const EventsAndTasks = () => {
+  const { data: eventos } = useQuery({
+    queryKey: ['eventos-proximos'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('eventos')
+        .select('*')
+        .gte('data_inicio', new Date().toISOString())
+        .order('data_inicio', { ascending: true })
+        .limit(5);
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
   return (
     <Card className="border-border bg-card">
       <CardContent className="p-6">
@@ -53,31 +45,35 @@ export const EventsAndTasks = () => {
           </TabsList>
           
           <TabsContent value="events" className="mt-6 space-y-4">
-            {events.map((event) => (
-              <div
-                key={event.id}
-                className="flex items-start gap-4 p-4 rounded-lg bg-secondary/50 border border-border hover:border-accent/50 transition-all duration-300"
-              >
-                <div className="p-2 rounded-lg bg-accent/10">
-                  <Calendar className="h-5 w-5 text-accent" />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-start justify-between">
-                    <h4 className="font-semibold text-foreground">{event.title}</h4>
-                    <Badge
-                      variant={event.status === "Confirmado" ? "default" : "secondary"}
-                      className={event.status === "Confirmado" ? "bg-accent text-accent-foreground" : ""}
-                    >
-                      {event.status}
-                    </Badge>
+            {eventos && eventos.length > 0 ? (
+              eventos.map((event) => (
+                <div
+                  key={event.id}
+                  className="flex items-start gap-4 p-4 rounded-lg bg-secondary/50 border border-border hover:border-accent/50 transition-all duration-300"
+                >
+                  <div className="p-2 rounded-lg bg-accent/10">
+                    <Calendar className="h-5 w-5 text-accent" />
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {event.date} às {event.time}
-                  </p>
-                  <p className="text-sm text-muted-foreground">{event.location}</p>
+                  <div className="flex-1">
+                    <div className="flex items-start justify-between">
+                      <h4 className="font-semibold text-foreground">{event.nome_evento}</h4>
+                      <Badge
+                        variant={event.status_evento === "Confirmado" ? "default" : "secondary"}
+                        className={event.status_evento === "Confirmado" ? "bg-accent text-accent-foreground" : ""}
+                      >
+                        {event.status_evento || "Pendente"}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {event.data_inicio && format(new Date(event.data_inicio), "dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR })}
+                    </p>
+                    <p className="text-sm text-muted-foreground">{event.local_evento}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <p className="text-center text-muted-foreground py-8">Nenhum evento próximo</p>
+            )}
           </TabsContent>
           
           <TabsContent value="tasks" className="mt-6 space-y-3">
