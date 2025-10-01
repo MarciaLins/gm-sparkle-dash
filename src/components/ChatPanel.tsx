@@ -1,0 +1,105 @@
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Send } from "lucide-react";
+import { useState } from "react";
+
+interface Message {
+  id: number;
+  text: string;
+  sender: "user" | "bot";
+  timestamp: Date;
+}
+
+export const ChatPanel = () => {
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: 1,
+      text: "Olá, Filipe! Sou a Sofia, da GM Produtora. Como posso ajudar você hoje?",
+      sender: "bot",
+      timestamp: new Date(),
+    },
+  ]);
+  const [input, setInput] = useState("");
+
+  const handleSend = () => {
+    if (input.trim()) {
+      const newMessage: Message = {
+        id: messages.length + 1,
+        text: input,
+        sender: "user",
+        timestamp: new Date(),
+      };
+      setMessages([...messages, newMessage]);
+      setInput("");
+
+      // Simulate bot response
+      setTimeout(() => {
+        const botResponse: Message = {
+          id: messages.length + 2,
+          text: "Entendi! Estou processando sua solicitação...",
+          sender: "bot",
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, botResponse]);
+      }, 1000);
+    }
+  };
+
+  return (
+    <Card className="h-full flex flex-col border-border bg-card">
+      <CardHeader className="border-b border-border">
+        <CardTitle className="text-xl font-semibold bg-gradient-to-r from-accent to-amber-400 bg-clip-text text-transparent">
+          Chat Assistente
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="flex-1 flex flex-col p-4 gap-4">
+        <ScrollArea className="flex-1 pr-4">
+          <div className="space-y-4">
+            {messages.map((message) => (
+              <div
+                key={message.id}
+                className={`flex ${
+                  message.sender === "user" ? "justify-end" : "justify-start"
+                }`}
+              >
+                <div
+                  className={`max-w-[80%] rounded-lg p-3 ${
+                    message.sender === "user"
+                      ? "bg-accent text-accent-foreground"
+                      : "bg-secondary text-secondary-foreground"
+                  }`}
+                >
+                  <p className="text-sm">{message.text}</p>
+                  <span className="text-xs opacity-60 mt-1 block">
+                    {message.timestamp.toLocaleTimeString("pt-BR", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
+        <div className="flex gap-2">
+          <Input
+            placeholder="Digite sua mensagem..."
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyPress={(e) => e.key === "Enter" && handleSend()}
+            className="bg-secondary border-border"
+          />
+          <Button
+            onClick={handleSend}
+            size="icon"
+            className="bg-accent text-accent-foreground hover:bg-accent/90"
+          >
+            <Send className="h-4 w-4" />
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
