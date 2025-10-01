@@ -3,7 +3,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Send, Mic, Paperclip, Camera } from "lucide-react";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface Message {
   id: number;
@@ -22,8 +24,21 @@ export const ChatPanel = () => {
     },
   ]);
   const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollContainer) {
+        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+      }
+    }
+  }, [messages]);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -46,27 +61,62 @@ export const ChatPanel = () => {
     console.log("Gravação de áudio iniciada");
   };
 
-  const handleSend = () => {
-    if (input.trim()) {
-      const newMessage: Message = {
+  const handleSend = async () => {
+    if (input.trim() && !isLoading) {
+      const userMessage: Message = {
         id: messages.length + 1,
         text: input,
         sender: "user",
         timestamp: new Date(),
       };
-      setMessages([...messages, newMessage]);
+      
+      const updatedMessages = [...messages, userMessage];
+      setMessages(updatedMessages);
       setInput("");
+      setIsLoading(true);
 
-      // Simulate bot response
-      setTimeout(() => {
+      try {
+        // Prepare conversation history for AI
+        const conversationHistory = updatedMessages.map(msg => ({
+          role: msg.sender === "user" ? "user" : "assistant",
+          content: msg.text
+        }));
+
+        // Call AI edge function
+        const { data, error } = await supabase.functions.invoke('ai-chat', {
+          body: { messages: conversationHistory }
+        });
+
+        if (error) throw error;
+
         const botResponse: Message = {
-          id: messages.length + 2,
-          text: "Entendi! Estou processando sua solicitação...",
+          id: updatedMessages.length + 1,
+          text: data.message || "Desculpe, não consegui processar sua mensagem.",
           sender: "bot",
           timestamp: new Date(),
         };
-        setMessages((prev) => [...prev, botResponse]);
-      }, 1000);
+        
+        setMessages(prev => [...prev, botResponse]);
+      } catch (error: any) {
+        console.error('Error calling AI:', error);
+        
+        toast({
+          title: "Erro ao processar mensagem",
+          description: "Não foi possível obter uma resposta. Tente novamente.",
+          variant: "destructive",
+        });
+
+        const errorMessage: Message = {
+          id: updatedMessages.length + 1,
+          text: "Desculpe, estou com dificuldades técnicas no momento. Por favor, tente novamente em alguns instantes.",
+          sender: "bot",
+          timestamp: new Date(),
+        };
+        
+        setMessages(prev => [...prev, errorMessage]);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -78,7 +128,7 @@ export const ChatPanel = () => {
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col p-4 gap-4">
-        <ScrollArea className="flex-1 pr-4">
+        <ScrollArea className="flex-1 pr-4" ref={scrollAreaRef}>
           <div className="space-y-4">
             {messages.map((message) => (
               <div
@@ -151,13 +201,15 @@ export const ChatPanel = () => {
             placeholder="Digite sua mensagem..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyPress={(e) => e.key === "Enter" && handleSend()}
+            onKeyPress={(e) => e.key === "Enter" && !isLoading && handleSend()}
             className="bg-secondary border-border"
+            disabled={isLoading}
           />
           <Button
             onClick={handleSend}
             size="icon"
             className="bg-accent text-accent-foreground hover:bg-accent/90"
+            disabled={isLoading}
           >
             <Send className="h-4 w-4" />
           </Button>
