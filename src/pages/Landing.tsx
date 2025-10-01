@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { MessageCircle, Send, Quote } from "lucide-react";
+import logoFilipeLima from "@/assets/logo-filipe-lima.jpg";
 
 interface Message {
   id: number;
@@ -53,8 +54,12 @@ export default function Landing() {
       {/* Header Section */}
       <header className="bg-card border-b border-border py-6 px-4 md:px-8">
         <div className="max-w-7xl mx-auto flex items-center gap-6">
-          <div className="w-16 h-16 bg-accent/10 rounded-lg flex items-center justify-center border border-accent/20">
-            <span className="text-2xl font-bold text-accent">FL</span>
+          <div className="w-16 h-16 rounded-lg overflow-hidden">
+            <img 
+              src={logoFilipeLima} 
+              alt="Filipe Lima Logo" 
+              className="w-full h-full object-contain"
+            />
           </div>
           <div>
             <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-accent to-amber-400 bg-clip-text text-transparent">
