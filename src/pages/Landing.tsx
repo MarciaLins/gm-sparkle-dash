@@ -54,20 +54,20 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Header Section */}
-      <header className="bg-card border-b border-border py-6 px-4 md:px-8">
-        <div className="max-w-7xl mx-auto flex items-center gap-6">
-          <div className="w-24 h-24 rounded-lg overflow-hidden">
+      <header className="bg-card border-b border-border py-4 px-4 md:py-6 md:px-8">
+        <div className="max-w-7xl mx-auto flex items-center gap-3 md:gap-6">
+          <div className="w-16 h-16 md:w-24 md:h-24 rounded-lg overflow-hidden flex-shrink-0">
             <img 
               src={logoFilipeLima} 
               alt="Filipe Lima Logo" 
               className="w-full h-full object-contain"
             />
           </div>
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-accent to-amber-400 bg-clip-text text-transparent">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-accent to-amber-400 bg-clip-text text-transparent truncate">
               Filipe Lima
             </h1>
-            <p className="text-sm md:text-base text-muted-foreground">
+            <p className="text-xs md:text-sm lg:text-base text-muted-foreground line-clamp-2">
               Violinista | A Trilha Sonora Perfeita para o Seu Momento Inesquecível
             </p>
           </div>
@@ -75,8 +75,8 @@ export default function Landing() {
       </header>
 
       {/* About Section */}
-      <section className="py-20 px-4 md:px-8 bg-card">
-        <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center">
+      <section className="py-12 px-4 md:py-16 lg:py-20 md:px-8 bg-card">
+        <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-8 md:gap-12 items-center">
           <div className="order-2 md:order-1 relative">
             <div className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none">
               <img 
@@ -85,18 +85,18 @@ export default function Landing() {
                 className="w-full h-auto object-contain"
               />
             </div>
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-accent to-amber-400 bg-clip-text text-transparent relative z-10">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6 bg-gradient-to-r from-accent to-amber-400 bg-clip-text text-transparent relative z-10">
               Sobre Filipe Lima
             </h2>
-            <p className="text-lg text-muted-foreground leading-relaxed mb-4 relative z-10">
+            <p className="text-base md:text-lg text-muted-foreground leading-relaxed mb-3 md:mb-4 relative z-10">
               Com mais de 13 anos de experiência, Filipe Lima é um violinista renomado que já encantou
               milhares de pessoas em casamentos, eventos corporativos e apresentações especiais.
             </p>
-            <p className="text-lg text-muted-foreground leading-relaxed mb-4 relative z-10">
+            <p className="text-base md:text-lg text-muted-foreground leading-relaxed mb-3 md:mb-4 relative z-10">
               Sua versatilidade musical abrange desde o clássico erudito até músicas contemporâneas,
               sempre com a elegância e sensibilidade que transformam momentos em memórias inesquecíveis.
             </p>
-            <p className="text-lg text-muted-foreground leading-relaxed relative z-10">
+            <p className="text-base md:text-lg text-muted-foreground leading-relaxed relative z-10">
               Cada apresentação é cuidadosamente personalizada para refletir a essência do seu evento,
               criando uma atmosfera única e sofisticada.
             </p>
@@ -114,12 +114,12 @@ export default function Landing() {
       </section>
 
       {/* Testimonials Section */}
-      <section className="py-20 px-4 md:px-8 bg-background">
+      <section className="py-12 px-4 md:py-16 lg:py-20 md:px-8 bg-background">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 bg-gradient-to-r from-accent to-amber-400 bg-clip-text text-transparent">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-center mb-8 md:mb-12 lg:mb-16 bg-gradient-to-r from-accent to-amber-400 bg-clip-text text-transparent">
             O Que Dizem Nossos Clientes
           </h2>
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             {[
               {
                 name: "Maria & João",
@@ -155,29 +155,29 @@ export default function Landing() {
       </section>
 
       {/* Floating Chat Button */}
-      <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3">
-        <div className="bg-accent text-accent-foreground px-4 py-2 rounded-lg shadow-lg animate-fade-in hidden md:block">
+      <div className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-50 flex items-center gap-3">
+        <div className="bg-accent text-accent-foreground px-4 py-2 rounded-lg shadow-lg animate-fade-in hidden lg:block">
           <p className="text-sm font-medium whitespace-nowrap">Converse com a Sofia!</p>
         </div>
         <Button
           onClick={() => setChatOpen(true)}
           size="icon"
-          className="h-20 w-20 rounded-full bg-gradient-to-r from-accent to-amber-400 hover:shadow-[0_0_40px_rgba(252,211,77,0.6)] transition-all duration-300 hover:scale-110"
+          className="h-14 w-14 md:h-16 md:w-16 lg:h-20 lg:w-20 rounded-full bg-gradient-to-r from-accent to-amber-400 hover:shadow-[0_0_40px_rgba(252,211,77,0.6)] transition-all duration-300 hover:scale-110"
         >
-          <MessageCircle className="h-10 w-10 text-primary-foreground" />
+          <MessageCircle className="h-7 w-7 md:h-8 md:w-8 lg:h-10 lg:w-10 text-primary-foreground" />
         </Button>
       </div>
 
       {/* Chat Dialog */}
       <Dialog open={chatOpen} onOpenChange={setChatOpen}>
-        <DialogContent className="sm:max-w-[500px] h-[600px] flex flex-col p-0 bg-card border-accent/20">
-          <DialogHeader className="border-b border-border p-6">
-            <DialogTitle className="text-xl font-semibold bg-gradient-to-r from-accent to-amber-400 bg-clip-text text-transparent">
+        <DialogContent className="w-[95vw] max-w-[500px] h-[85vh] sm:h-[600px] flex flex-col p-0 bg-card border-accent/20">
+          <DialogHeader className="border-b border-border p-4 md:p-6">
+            <DialogTitle className="text-lg md:text-xl font-semibold bg-gradient-to-r from-accent to-amber-400 bg-clip-text text-transparent">
               Sofia, assistente pessoal do Filipe Lima
             </DialogTitle>
           </DialogHeader>
           
-          <ScrollArea className="flex-1 p-6">
+          <ScrollArea className="flex-1 p-4 md:p-6">
             <div className="space-y-4">
               {messages.map((message) => (
                 <div

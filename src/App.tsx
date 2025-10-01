@@ -12,7 +12,6 @@ import Equipe from "./pages/Equipe";
 import Financeiro from "./pages/Financeiro";
 import Servicos from "./pages/Servicos";
 import Configuracoes from "./pages/Configuracoes";
-import TestVisualEditor from "./pages/TestVisualEditor";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,7 +32,6 @@ const App = () => (
           <Route path="/financeiro" element={<Financeiro />} />
           <Route path="/servicos" element={<Servicos />} />
           <Route path="/configuracoes" element={<Configuracoes />} />
-          <Route path="/test-visual-editor" element={<TestVisualEditor />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

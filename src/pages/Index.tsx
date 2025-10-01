@@ -1,10 +1,31 @@
 import { Layout } from "@/components/Layout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, TrendingUp, Users } from "lucide-react";
+import { MetricCard } from "@/components/MetricCard";
+import { ChatPanel } from "@/components/ChatPanel";
+import { EventsAndTasks } from "@/components/EventsAndTasks";
+import { DollarSign, TrendingUp, Users, Calendar } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
-  // Versão simplificada para teste do Visual Editor
-  console.log("Dashboard carregado - modo de teste do Visual Editor");
+  const { data: metricsData } = useQuery({
+    queryKey: ['dashboard-metrics'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('eventos')
+        .select('*');
+      
+      if (error) throw error;
+      
+      const faturamento = data?.reduce((acc, evento) => acc + (evento.valor_proposta_final || 0), 0) || 0;
+      const eventosConfirmados = data?.filter(e => e.status_evento === "Confirmado").length || 0;
+      
+      return {
+        faturamento,
+        eventosConfirmados,
+        novoLeads: 5,
+      };
+    }
+  });
 
   return (
     <Layout>
@@ -23,71 +44,44 @@ const Index = () => {
 
         {/* Main Content */}
         <div className="container mx-auto px-6 py-8">
-          <div className="mb-6">
-            <p className="text-muted-foreground">
-              Versão simplificada para testar o Visual Editor
-            </p>
+          {/* Metric Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <MetricCard
+              title="Faturamento (Mês)"
+              value={`R$ ${metricsData?.faturamento?.toFixed(2) || '0,00'}`}
+              icon={DollarSign}
+              trend={{ value: "12%", positive: true }}
+            />
+            <MetricCard
+              title="Lucro Líquido (Mês)"
+              value="R$ 8.500,00"
+              icon={TrendingUp}
+              trend={{ value: "8%", positive: true }}
+            />
+            <MetricCard
+              title="Novos Leads"
+              value={metricsData?.novoLeads?.toString() || '0'}
+              icon={Users}
+            />
+            <MetricCard
+              title="Eventos Confirmados"
+              value={metricsData?.eventosConfirmados?.toString() || '0'}
+              icon={Calendar}
+            />
           </div>
 
-          {/* Metric Cards Simplificados */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            {/* Card 1 */}
-            <Card className="border-border bg-card">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Faturamento (Mês)
-                </CardTitle>
-                <DollarSign className="h-5 w-5 text-accent" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-foreground">R$ 1.250,00</div>
-              </CardContent>
-            </Card>
+          {/* Two Column Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Events and Tasks */}
+            <div className="h-[600px]">
+              <EventsAndTasks />
+            </div>
 
-            {/* Card 2 */}
-            <Card className="border-border bg-card">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Lucro Líquido (Mês)
-                </CardTitle>
-                <TrendingUp className="h-5 w-5 text-accent" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-foreground">R$ 800,00</div>
-              </CardContent>
-            </Card>
-
-            {/* Card 3 */}
-            <Card className="border-border bg-card">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Novos Leads
-                </CardTitle>
-                <Users className="h-5 w-5 text-accent" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-foreground">3</div>
-              </CardContent>
-            </Card>
+            {/* Chat Panel */}
+            <div className="h-[600px]">
+              <ChatPanel />
+            </div>
           </div>
-
-          {/* Card de Teste */}
-          <Card className="border-border bg-card">
-            <CardHeader>
-              <CardTitle className="text-foreground">Área de Teste do Visual Editor</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground mb-4">
-                Esta é uma versão simplificada do dashboard com elementos estáticos.
-              </p>
-              <p className="text-muted-foreground mb-4">
-                Tente selecionar este texto ou os cards acima usando o Visual Editor.
-              </p>
-              <button className="bg-accent text-accent-foreground px-4 py-2 rounded-md hover:bg-accent/90">
-                Botão de Teste
-              </button>
-            </CardContent>
-          </Card>
         </div>
       </div>
     </Layout>
