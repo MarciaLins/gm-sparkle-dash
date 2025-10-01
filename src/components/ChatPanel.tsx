@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Send, Mic, Paperclip } from "lucide-react";
+import { Send, Mic, Paperclip, Camera } from "lucide-react";
 import { useState, useRef } from "react";
 
 interface Message {
@@ -23,12 +23,21 @@ export const ChatPanel = () => {
   ]);
   const [input, setInput] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
       // Placeholder para futura implementação de upload
       console.log("Arquivos selecionados:", files);
+    }
+  };
+
+  const handleCameraCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      // Placeholder para futura implementação de captura de foto
+      console.log("Foto capturada:", files[0]);
     }
   };
 
@@ -106,6 +115,14 @@ export const ChatPanel = () => {
             accept="image/*,.pdf,.doc,.docx"
             multiple
           />
+          <input
+            ref={cameraInputRef}
+            type="file"
+            className="hidden"
+            onChange={handleCameraCapture}
+            accept="image/*"
+            capture="environment"
+          />
           <Button
             onClick={() => fileInputRef.current?.click()}
             size="icon"
@@ -113,6 +130,14 @@ export const ChatPanel = () => {
             className="shrink-0"
           >
             <Paperclip className="h-4 w-4" />
+          </Button>
+          <Button
+            onClick={() => cameraInputRef.current?.click()}
+            size="icon"
+            variant="ghost"
+            className="shrink-0"
+          >
+            <Camera className="h-4 w-4" />
           </Button>
           <Button
             onClick={handleMicClick}
