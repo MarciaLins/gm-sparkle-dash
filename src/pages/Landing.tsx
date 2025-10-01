@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { MessageCircle, Send, Quote } from "lucide-react";
 import logoFilipeLima from "@/assets/logo-filipe-lima.jpg";
 import filipeLimaVideo from "@/assets/filipe-lima-video.mp4";
+import filipeLimaPhoto from "@/assets/filipe-lima-photo.jpg";
 
 interface Message {
   id: number;
@@ -96,7 +97,7 @@ export default function Landing() {
           <div className="order-1 md:order-2">
             <div className="relative aspect-[3/4] rounded-lg overflow-hidden shadow-[0_0_40px_rgba(252,211,77,0.2)]">
               <img
-                src="https://images.unsplash.com/photo-1465847899084-d164df4dedc6?auto=format&fit=crop&w=800&q=80"
+                src={filipeLimaPhoto}
                 alt="Filipe Lima Violinista"
                 className="w-full h-full object-cover"
               />
