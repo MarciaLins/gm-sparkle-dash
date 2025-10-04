@@ -8,6 +8,7 @@ import { MessageCircle, Send, Quote } from "lucide-react";
 import logoFilipeLima from "@/assets/logo-filipe-lima.jpg";
 import filipeLimaVideo from "@/assets/filipe-lima-video.mp4";
 import filipeLimaPhoto from "@/assets/filipe-lima-photo.jpg";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Message {
   id: number;
@@ -28,10 +29,6 @@ export default function Landing() {
   ]);
   const [input, setInput] = useState("");
 
-  // ---> ADICIONADO: URL do Webhook do Make.com 
-  const MAKE_WEBHOOK_URL = "https://hook.us2.make.com/w9x6b127jopvrsyudcvj5ohydiktbkgt";
-
-  // ---> MODIFICADO: Função inteira para se conectar ao Make.com
   const handleSend = async () => {
     if (input.trim()) {
       const userMessage: Message = {
@@ -40,6 +37,7 @@ export default function Landing() {
         sender: "user",
         timestamp: new Date(),
       };
+      
       // Adiciona a mensagem do usuário e uma mensagem de "pensando..." da Sofia
       setMessages((prev) => [
         ...prev,
@@ -51,51 +49,35 @@ export default function Landing() {
           timestamp: new Date(),
         },
       ]);
-      const currentInput = input;
+      
       setInput("");
 
       try {
-        // Envia a mensagem do usuário para o Webhook do Make.com
-        const response = await fetch(MAKE_WEBHOOK_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ message: currentInput }),
+        // Constrói o histórico completo de mensagens para enviar à IA
+        const conversationHistory = [...messages, userMessage].map(msg => ({
+          role: msg.sender === "user" ? "user" : "assistant",
+          content: msg.text
+        }));
+
+        // Chama a edge function ai-chat com Google Gemini
+        const { data, error } = await supabase.functions.invoke('ai-chat', {
+          body: { messages: conversationHistory }
         });
 
-        if (!response.ok) {
-          throw new Error("Erro na comunicação com a Sofia.");
+        if (error) {
+          throw new Error(error.message || "Erro na comunicação com a Sofia.");
         }
 
-        // Recebe a resposta da Sofia
-        let replyText = "Desculpe, não consegui processar a resposta.";
-        
-        try {
-          const data = await response.json();
-          replyText = data.reply || data.message || data.status || replyText;
-        } catch (jsonError) {
-          // Se o JSON estiver mal formatado, tenta pegar o texto bruto
-          const textResponse = await response.text();
-          console.log("Resposta do webhook:", textResponse);
-          
-          // Tenta extrair qualquer texto útil da resposta
-          const match = textResponse.match(/"reply"\s*:\s*"([^"]+)"|"message"\s*:\s*"([^"]+)"|"status"\s*:\s*"([^"]+)"/);
-          if (match) {
-            replyText = match[1] || match[2] || match[3] || replyText;
-          }
-        }
-        
         const sofiaResponse: Message = {
           id: messages.length + 3,
-          text: replyText,
+          text: data.message || "Desculpe, não consegui processar a resposta.",
           sender: "sofia",
           timestamp: new Date(),
         };
 
         // Remove a mensagem "digitando..." e adiciona a resposta final da Sofia
         setMessages((prev) => [
-          ...prev.slice(0, -1), // Remove o último item ("digitando...")
+          ...prev.slice(0, -1),
           sofiaResponse,
         ]);
 
@@ -107,8 +89,9 @@ export default function Landing() {
           sender: "sofia",
           timestamp: new Date(),
         };
+        
         // Remove a mensagem "digitando..." e adiciona a mensagem de erro
-         setMessages((prev) => [
+        setMessages((prev) => [
           ...prev.slice(0, -1),
           errorResponse,
         ]);
