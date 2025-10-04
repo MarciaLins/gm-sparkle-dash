@@ -254,6 +254,48 @@ export type Database = {
           },
         ]
       }
+      pacotes_servicos: {
+        Row: {
+          ativo: boolean
+          categoria: string | null
+          created_at: string
+          descricao: string
+          detalhes: string[] | null
+          id: number
+          nome: string
+          ordem_exibicao: number
+          preco_base: number
+          preco_tipo: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          categoria?: string | null
+          created_at?: string
+          descricao: string
+          detalhes?: string[] | null
+          id?: never
+          nome: string
+          ordem_exibicao?: number
+          preco_base: number
+          preco_tipo: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          categoria?: string | null
+          created_at?: string
+          descricao?: string
+          detalhes?: string[] | null
+          id?: never
+          nome?: string
+          ordem_exibicao?: number
+          preco_base?: number
+          preco_tipo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       servicos: {
         Row: {
           created_at: string | null
