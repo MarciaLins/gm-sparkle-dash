@@ -69,11 +69,26 @@ export default function Landing() {
         }
 
         // Recebe a resposta da Sofia
-        const data = await response.json();
+        let replyText = "Desculpe, não consegui processar a resposta.";
+        
+        try {
+          const data = await response.json();
+          replyText = data.reply || data.message || data.status || replyText;
+        } catch (jsonError) {
+          // Se o JSON estiver mal formatado, tenta pegar o texto bruto
+          const textResponse = await response.text();
+          console.log("Resposta do webhook:", textResponse);
+          
+          // Tenta extrair qualquer texto útil da resposta
+          const match = textResponse.match(/"reply"\s*:\s*"([^"]+)"|"message"\s*:\s*"([^"]+)"|"status"\s*:\s*"([^"]+)"/);
+          if (match) {
+            replyText = match[1] || match[2] || match[3] || replyText;
+          }
+        }
         
         const sofiaResponse: Message = {
           id: messages.length + 3,
-          text: data.reply, // 'reply' é o que o Make.com vai nos devolver
+          text: replyText,
           sender: "sofia",
           timestamp: new Date(),
         };
