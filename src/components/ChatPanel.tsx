@@ -14,7 +14,11 @@ interface Message {
   timestamp: Date;
 }
 
-export const ChatPanel = () => {
+interface ChatPanelProps {
+  initialMessage?: string;
+}
+
+export const ChatPanel = ({ initialMessage }: ChatPanelProps = {}) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
@@ -39,6 +43,13 @@ export const ChatPanel = () => {
       }
     }
   }, [messages]);
+
+  // Pre-populate input when initialMessage changes
+  useEffect(() => {
+    if (initialMessage) {
+      setInput(initialMessage);
+    }
+  }, [initialMessage]);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
