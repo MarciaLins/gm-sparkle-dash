@@ -28,7 +28,7 @@ export default function Landing() {
   ]);
   const [input, setInput] = useState("");
 
-  // ---> ADICIONADO: URL do Webhook do Make.com (vamos preencher depois)
+  // ---> ADICIONADO: URL do Webhook do Make.com 
   const MAKE_WEBHOOK_URL = "https://hook.us2.make.com/w9x6b127jopvrsyudcvj5ohydiktbkgt";
 
   // ---> MODIFICADO: Função inteira para se conectar ao Make.com
