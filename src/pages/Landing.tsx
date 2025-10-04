@@ -70,8 +70,8 @@ export default function Landing() {
           content: msg.text
         }));
 
-        // Chama a edge function ai-chat com Google Gemini
-        const { data, error } = await supabase.functions.invoke('ai-chat', {
+        // Chama a edge function public-ai-chat (pública) com Google Gemini
+        const { data, error } = await supabase.functions.invoke('public-ai-chat', {
           body: { messages: conversationHistory }
         });
 

@@ -10,6 +10,13 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { z } from "zod";
+
+const membroSchema = z.object({
+  nome_membro: z.string().trim().min(1, "Nome é obrigatório").max(100),
+  funcao_membro: z.string().trim().min(1, "Função é obrigatória").max(100),
+  valor_pagamento: z.number().positive("Valor deve ser positivo"),
+});
 
 const Equipe = () => {
   const [open, setOpen] = useState(false);
@@ -53,17 +60,27 @@ const Equipe = () => {
   });
 
   const handleSave = () => {
-    if (!nome || !funcao || !valor) {
-      toast({ title: "Preencha todos os campos", variant: "destructive" });
-      return;
-    }
-
     const valorNumerico = parseFloat(valor.replace(/[^\d,]/g, '').replace(',', '.'));
     
-    addMembro.mutate({
+    const validation = membroSchema.safeParse({
       nome_membro: nome,
       funcao_membro: funcao,
-      valor_pagamento: valorNumerico
+      valor_pagamento: valorNumerico,
+    });
+
+    if (!validation.success) {
+      toast({ 
+        title: "Erro de validação", 
+        description: validation.error.errors[0].message,
+        variant: "destructive" 
+      });
+      return;
+    }
+    
+    addMembro.mutate({
+      nome_membro: validation.data.nome_membro,
+      funcao_membro: validation.data.funcao_membro,
+      valor_pagamento: validation.data.valor_pagamento
     });
   };
 

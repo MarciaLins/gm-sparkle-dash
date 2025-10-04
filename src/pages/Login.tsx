@@ -1,23 +1,28 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
 import { Mail } from "lucide-react";
 import { z } from "zod";
+import { useAuth } from "@/contexts/AuthProvider";
 
 const emailSchema = z.object({
   email: z.string().trim().email({ message: "Email inválido" }),
 });
 
-const AUTHORIZED_EMAIL = "filipecc2002@gmail.com";
-
 const Login = () => {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
+  const { signIn, user } = useAuth();
   const navigate = useNavigate();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      navigate("/");
+    }
+  }, [user, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,34 +30,12 @@ const Login = () => {
     // Validate email
     const validation = emailSchema.safeParse({ email });
     if (!validation.success) {
-      toast({
-        title: "Erro",
-        description: validation.error.errors[0].message,
-        variant: "destructive",
-      });
       return;
     }
 
     setIsLoading(true);
-
-    // Check if email is authorized
-    if (email.trim().toLowerCase() === AUTHORIZED_EMAIL.toLowerCase()) {
-      toast({
-        title: "Acesso autorizado!",
-        description: "Redirecionando para o painel...",
-      });
-      
-      setTimeout(() => {
-        navigate("/");
-      }, 1000);
-    } else {
-      toast({
-        title: "Acesso negado",
-        description: "Este email não está autorizado.",
-        variant: "destructive",
-      });
-      setIsLoading(false);
-    }
+    await signIn(email);
+    setIsLoading(false);
   };
 
   return (
@@ -98,7 +81,7 @@ const Login = () => {
           </form>
 
           <div className="mt-6 text-center text-sm text-muted-foreground">
-            Apenas emails autorizados têm acesso
+            Você receberá um link mágico por email para acessar
           </div>
         </div>
       </div>

@@ -13,18 +13,6 @@ serve(async (req) => {
   }
 
   try {
-    // Check authentication
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: 'Não autorizado' }),
-        {
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
-    }
-
     const { messages } = await req.json();
     const GOOGLE_GEMINI_API_KEY = Deno.env.get('GOOGLE_GEMINI_API_KEY');
     
@@ -33,10 +21,10 @@ serve(async (req) => {
       throw new Error('API key not configured');
     }
 
-    console.log('Received chat request with', messages?.length || 0, 'messages');
+    console.log('Received public chat request with', messages?.length || 0, 'messages');
 
-    // System context for Sofia
-    const systemContext = `Você é Sofia, a assistente virtual inteligente da GM Produtora, uma empresa de eventos e produção musical liderada por Filipe Lima, um violinista talentoso.
+    // System context for public landing page
+    const systemContext = `Você é um assistente virtual da GM Produtora, liderada por Filipe Lima, um violinista talentoso.
 
 Sua personalidade:
 - Profissional, mas calorosa e amigável
@@ -45,18 +33,15 @@ Sua personalidade:
 - Atenciosa aos detalhes
 
 Suas responsabilidades:
-- Ajudar Filipe a gerenciar clientes, eventos e finanças
-- Responder perguntas sobre métricas do dashboard
-- Sugerir estratégias para melhorar o negócio
-- Organizar informações sobre eventos, equipe e serviços
-- Fornecer insights sobre receitas, custos e lucratividade
+- Responder perguntas sobre os serviços oferecidos
 - Explicar os pacotes de serviços disponíveis
+- Fornecer informações sobre a empresa e sobre Filipe Lima
+- Ajudar potenciais clientes a entender qual pacote melhor atende suas necessidades
 
 Contexto do negócio:
 - GM Produtora oferece serviços de violino para eventos (casamentos, festas corporativas, eventos sociais)
 - A empresa gerencia uma equipe de profissionais (músicos, técnicos, etc.)
 - Trabalha com orçamentos, propostas e negociações com clientes
-- Acompanha métricas de desempenho como receita, eventos confirmados, taxa de conversão
 
 PACOTES DE SERVIÇOS DISPONÍVEIS:
 
@@ -103,7 +88,7 @@ PACOTES DE SERVIÇOS DISPONÍVEIS:
 
 IMPORTANTE: Todos os preços com "a partir de" podem variar conforme duração e especificidades do evento. Sempre incentive o cliente a entrar em contato para um orçamento personalizado.
 
-Sempre responda em português do Brasil de forma clara e útil. Se não souber alguma informação específica, seja honesta e sugira como Filipe pode encontrar essa informação no sistema.`;
+Sempre responda em português do Brasil de forma clara e útil.`;
 
     // Prepare messages for Gemini format
     const contents = [
@@ -157,7 +142,7 @@ Sempre responda em português do Brasil de forma clara e útil. Se não souber a
       }
     );
   } catch (error: any) {
-    console.error('Error in ai-chat function:', error);
+    console.error('Error in public-ai-chat function:', error);
     return new Response(
       JSON.stringify({ 
         error: error?.message || 'Erro ao processar sua mensagem',

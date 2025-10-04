@@ -6,6 +6,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle } from "lucide-react";
 import { useState } from "react";
+import { z } from "zod";
+import { useToast } from "@/hooks/use-toast";
+
+const propostaSchema = z.object({
+  nomeEvento: z.string().trim().min(1, "Nome do evento é obrigatório").max(200),
+  dataEvento: z.string().min(1, "Data do evento é obrigatória"),
+  localEvento: z.string().trim().min(1, "Local do evento é obrigatório").max(300),
+  valorFinal: z.number().positive("Valor deve ser positivo"),
+  valorMinimo: z.number().positive("Valor deve ser positivo"),
+});
 
 const AprovacaoProposta = () => {
   const [nomeEvento, setNomeEvento] = useState("");
@@ -16,15 +26,33 @@ const AprovacaoProposta = () => {
   const [analiseIA, setAnaliseIA] = useState("");
   const [lucroLiquido, setLucroLiquido] = useState("");
   const [margemLucro, setMargemLucro] = useState("");
+  const { toast } = useToast();
 
   const handleAprovar = () => {
-    console.log("Proposta aprovada");
-    // Lógica de aprovação
+    const validation = propostaSchema.safeParse({
+      nomeEvento,
+      dataEvento,
+      localEvento,
+      valorFinal: parseFloat(valorFinal),
+      valorMinimo: parseFloat(valorMinimo),
+    });
+
+    if (!validation.success) {
+      toast({
+        title: "Erro de validação",
+        description: validation.error.errors[0].message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    console.log("Proposta aprovada", validation.data);
+    toast({ title: "Proposta aprovada com sucesso!" });
   };
 
   const handleRecusar = () => {
     console.log("Proposta recusada");
-    // Lógica de recusa
+    toast({ title: "Proposta recusada" });
   };
 
   return (
