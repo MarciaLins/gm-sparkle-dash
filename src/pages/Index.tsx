@@ -34,8 +34,23 @@ const Index = () => {
       const faturamentoMes = financeiroData?.reduce((acc, item) => acc + (Number(item.valor) || 0), 0) || 0;
       const eventosConfirmados = eventosData?.filter(e => e.status_evento === "Confirmado").length || 0;
       
+      // Buscar faturamento dos últimos 6 meses
+      const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+      
+      const { data: faturamentoSemestralData, error: faturamentoSemestralError } = await supabase
+        .from('financeiro')
+        .select('valor')
+        .eq('tipo', 'Receita')
+        .gte('created_at', sixMonthsAgo.toISOString())
+        .lte('created_at', endOfMonth.toISOString());
+      
+      if (faturamentoSemestralError) throw faturamentoSemestralError;
+      
+      const faturamentoSemestral = faturamentoSemestralData?.reduce((acc, item) => acc + (Number(item.valor) || 0), 0) || 0;
+      
       return {
         faturamento: faturamentoMes,
+        faturamentoSemestral,
         eventosConfirmados,
         novoLeads: 5,
       };
@@ -82,6 +97,15 @@ const Index = () => {
               title="Eventos Confirmados"
               value={metricsData?.eventosConfirmados?.toString() || '0'}
               icon={Calendar}
+            />
+          </div>
+
+          {/* Faturamento Semestral Card */}
+          <div className="grid grid-cols-1 mb-8">
+            <MetricCard
+              title="Faturamento Semestral"
+              value={`R$ ${(metricsData?.faturamentoSemestral || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+              icon={TrendingUp}
             />
           </div>
 
