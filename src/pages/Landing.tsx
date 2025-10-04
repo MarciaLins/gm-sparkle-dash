@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -28,6 +28,17 @@ export default function Landing() {
     },
   ]);
   const [input, setInput] = useState("");
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollContainer) {
+        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+      }
+    }
+  }, [messages]);
 
   const handleSend = async () => {
     if (input.trim()) {
@@ -225,7 +236,7 @@ export default function Landing() {
             </DialogTitle>
           </DialogHeader>
           
-          <ScrollArea className="flex-1 p-6">
+          <ScrollArea className="flex-1 p-6" ref={scrollAreaRef}>
             <div className="space-y-4">
               {messages.map((message) => (
                 <div
