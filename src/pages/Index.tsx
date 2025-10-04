@@ -10,17 +10,32 @@ const Index = () => {
   const { data: metricsData } = useQuery({
     queryKey: ['dashboard-metrics'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Buscar eventos
+      const { data: eventosData, error: eventosError } = await supabase
         .from('eventos')
         .select('*');
       
-      if (error) throw error;
+      if (eventosError) throw eventosError;
       
-      const faturamento = data?.reduce((acc, evento) => acc + (evento.valor_proposta_final || 0), 0) || 0;
-      const eventosConfirmados = data?.filter(e => e.status_evento === "Confirmado").length || 0;
+      // Buscar faturamento do mês atual da tabela financeiro
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+      
+      const { data: financeiroData, error: financeiroError } = await supabase
+        .from('financeiro')
+        .select('valor')
+        .eq('tipo', 'Receita')
+        .gte('created_at', startOfMonth.toISOString())
+        .lte('created_at', endOfMonth.toISOString());
+      
+      if (financeiroError) throw financeiroError;
+      
+      const faturamentoMes = financeiroData?.reduce((acc, item) => acc + (Number(item.valor) || 0), 0) || 0;
+      const eventosConfirmados = eventosData?.filter(e => e.status_evento === "Confirmado").length || 0;
       
       return {
-        faturamento,
+        faturamento: faturamentoMes,
         eventosConfirmados,
         novoLeads: 5,
       };
@@ -48,7 +63,7 @@ const Index = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <MetricCard
               title="Faturamento (Mês)"
-              value={`R$ ${metricsData?.faturamento?.toFixed(2) || '0,00'}`}
+              value={`R$ ${(metricsData?.faturamento || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
               icon={DollarSign}
               trend={{ value: "12%", positive: true }}
             />
