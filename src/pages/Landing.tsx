@@ -13,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 interface Message {
   id: number;
   text: string;
-  sender: "user" | "sofia";
+  sender: "user" | "assistant";
   timestamp: Date;
 }
 
@@ -22,8 +22,8 @@ export default function Landing() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
-      text: "Olá! Fico feliz com seu interesse. Para qual data e tipo de evento seria?",
-      sender: "sofia",
+      text: "Olá! Sou o Assistente de Filipe, da GM Produtora. Como posso ajudá-lo hoje?",
+      sender: "assistant",
       timestamp: new Date(),
     },
   ]);
@@ -38,14 +38,14 @@ export default function Landing() {
         timestamp: new Date(),
       };
       
-      // Adiciona a mensagem do usuário e uma mensagem de "pensando..." da Sofia
+      // Adiciona a mensagem do usuário e uma mensagem de "pensando..."
       setMessages((prev) => [
         ...prev,
         userMessage,
         {
           id: prev.length + 2,
-          text: "Sofia está digitando...",
-          sender: "sofia",
+          text: "Assistente está digitando...",
+          sender: "assistant",
           timestamp: new Date(),
         },
       ]);
@@ -65,20 +65,20 @@ export default function Landing() {
         });
 
         if (error) {
-          throw new Error(error.message || "Erro na comunicação com a Sofia.");
+          throw new Error(error.message || "Erro na comunicação com o Assistente.");
         }
 
-        const sofiaResponse: Message = {
+        const assistantResponse: Message = {
           id: messages.length + 3,
           text: data.message || "Desculpe, não consegui processar a resposta.",
-          sender: "sofia",
+          sender: "assistant",
           timestamp: new Date(),
         };
 
-        // Remove a mensagem "digitando..." e adiciona a resposta final da Sofia
+        // Remove a mensagem "digitando..." e adiciona a resposta final
         setMessages((prev) => [
           ...prev.slice(0, -1),
-          sofiaResponse,
+          assistantResponse,
         ]);
 
       } catch (error) {
@@ -86,7 +86,7 @@ export default function Landing() {
         const errorResponse: Message = {
           id: messages.length + 3,
           text: "Desculpe, estou com um problema técnico no momento. Tente novamente mais tarde.",
-          sender: "sofia",
+          sender: "assistant",
           timestamp: new Date(),
         };
         
@@ -205,7 +205,7 @@ export default function Landing() {
       {/* Floating Chat Button */}
       <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3">
         <div className="bg-accent text-accent-foreground px-4 py-2 rounded-lg shadow-lg animate-fade-in hidden md:block">
-          <p className="text-sm font-medium whitespace-nowrap">Converse com a Sofia!</p>
+          <p className="text-sm font-medium whitespace-nowrap">Converse com o Assistente!</p>
         </div>
         <Button
           onClick={() => setChatOpen(true)}
@@ -221,7 +221,7 @@ export default function Landing() {
         <DialogContent className="sm:max-w-[500px] h-[600px] flex flex-col p-0 bg-card border-accent/20">
           <DialogHeader className="border-b border-border p-6">
             <DialogTitle className="text-xl font-semibold bg-gradient-to-r from-accent to-amber-400 bg-clip-text text-transparent">
-              Sofia, assistente pessoal do Filipe Lima
+              Assistente de Filipe
             </DialogTitle>
           </DialogHeader>
           
