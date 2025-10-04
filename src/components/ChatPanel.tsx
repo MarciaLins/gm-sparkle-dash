@@ -22,7 +22,7 @@ export const ChatPanel = ({ initialMessage }: ChatPanelProps = {}) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
-      text: "Olá, Filipe! Sou o Assistente de Filipe Lima. Como posso ajudar você hoje?",
+      text: "Olá, Filipe! Como posso ajudar você hoje?",
       sender: "bot",
       timestamp: new Date(),
     },
