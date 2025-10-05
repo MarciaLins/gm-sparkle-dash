@@ -9,7 +9,8 @@ const corsHeaders = {
 const GEMINI_API_KEY = Deno.env.get('GOOGLE_GEMINI_API_KEY');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const MAKE_WEBHOOK = "https://hook.us2.make.com/q9j4itjdinh8etuqontbz7yewcom5rzv";
+const MAKE_WEBHOOK_DASHBOARD = "https://hook.us2.make.com/q9j4itjdinh8etuqontbz7yewcom5rzv";
+const MAKE_WEBHOOK_LANDING = "https://hook.us2.make.com/ngw41roxe6sx7txxqmfn8mae305618tt";
 
 const SOFIA_SYSTEM_PROMPT_CLIENT = `IDENTIDADE E MISSÃO PRINCIPAL
 Você é Sofia, assistente do violinista Filipe Lima, especializada em gestão de eventos musicais e apresentações artísticas.
@@ -360,8 +361,11 @@ serve(async (req) => {
 
     if (hasAction) {
       console.log('Ação detectada, notificando Make.com...');
+      // Selecionar webhook baseado no contexto
+      const webhookUrl = context === "landing_page" ? MAKE_WEBHOOK_LANDING : MAKE_WEBHOOK_DASHBOARD;
+      
       try {
-        await fetch(MAKE_WEBHOOK, {
+        await fetch(webhookUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
