@@ -100,10 +100,27 @@ serve(async (req) => {
       throw new Error('GOOGLE_GEMINI_API_KEY não configurada');
     }
 
-    // Selecionar prompt baseado no contexto
-    const systemPrompt = context === "private_dashboard" 
+    // Obter data atual formatada em português
+    const now = new Date();
+    const dataAtual = now.toLocaleDateString('pt-BR', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric',
+      timeZone: 'America/Recife'
+    });
+    const horaAtual = now.toLocaleTimeString('pt-BR', {
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'America/Recife'
+    });
+
+    // Selecionar prompt baseado no contexto e adicionar data/hora
+    const basePrompt = context === "private_dashboard" 
       ? SOFIA_SYSTEM_PROMPT_FILIPE 
       : SOFIA_SYSTEM_PROMPT_CLIENT;
+    
+    const systemPrompt = `${basePrompt}\n\nDATA E HORA ATUAL: Hoje é ${dataAtual}, são ${horaAtual} (horário de Recife/Pernambuco).`;
 
     // Construir payload para Gemini
     const geminiContents: any[] = [];
