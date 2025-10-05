@@ -30,7 +30,7 @@ export default function Landing() {
   const [input, setInput] = useState("");
 
   // A URL do Webhook do Make.com (já configurada)
-  const MAKE_WEBHOOK_URL = "https://hook.us2.make.com/w9x6b127jopvrsyudcvj5ohydiktbkgt";
+  const MAKE_WEBHOOK_URL = "https://hook.us2.make.com/ngw41roxe6sx7txxqmfn8mae305618tt";
 
   const handleSend = async () => {
     if (input.trim()) {
