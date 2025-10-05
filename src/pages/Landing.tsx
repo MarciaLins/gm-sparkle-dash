@@ -29,8 +29,8 @@ export default function Landing() {
   ]);
   const [input, setInput] = useState("");
 
-  // Este será o ÚNICO local a ser alterado mais tarde
-  const MAKE_WEBHOOK_URL = "https://hook.us2.make.com/wz2v3vxxoj0gjanahvhxhxtcdjoof3w3";
+  // URL do webhook do Make para Sofia vendedora
+  const MAKE_WEBHOOK_URL = "https://hook.us2.make.com/ngw41roxe6sx7txxqmfn8mae305618tt";
 
   const handleSend = async () => {
     if (input.trim()) {
