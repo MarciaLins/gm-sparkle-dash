@@ -346,23 +346,12 @@ serve(async (req) => {
       sofiaReply = "Desculpe, não consegui processar sua mensagem.";
     }
 
-    // Detectar ações que precisam notificar Make.com
-    const actionKeywords = [
-      'agenda_bloqueada', 'block_date', 'data bloqueada',
-      'proposta_aprovada', 'approve_proposal', 'proposta aceita',
-      'despesa_adicionada', 'add_expense', 'despesa registrada',
-      'contrato_enviado', 'send_contract', 'contrato gerado',
-      'reuniao_agendada', 'schedule_meeting', 'reunião marcada'
-    ];
-
-    const hasAction = actionKeywords.some(keyword => 
-      sofiaReply.toLowerCase().includes(keyword.toLowerCase())
-    );
-
     // Notificar Make.com
     // Landing page: sempre notifica (vendas)
-    // Dashboard: apenas quando há ação
-    if (context === "landing_page" || hasAction) {
+    // Dashboard privado: sempre notifica (gestão interna)
+    const shouldNotify = context === "landing_page" || context === "private_dashboard";
+    
+    if (shouldNotify) {
       const webhookUrl = context === "landing_page" ? MAKE_WEBHOOK_LANDING : MAKE_WEBHOOK_DASHBOARD;
       console.log('Notificando Make.com...', { webhookUrl, context });
       
