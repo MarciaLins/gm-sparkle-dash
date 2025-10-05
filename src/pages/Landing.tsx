@@ -73,17 +73,27 @@ export default function Landing() {
           throw new Error(`Erro de HTTP! Status: ${response.status}`);
         }
 
-        const data = await response.json();
-        console.log('Resposta do Make:', data);
+        // O Make pode retornar texto simples ou JSON
+        const responseText = await response.text();
+        console.log('Resposta do Make (texto):', responseText);
         
-        // Verifica se o Make retornou apenas "Accepted" ou a resposta completa
         let sofiaMessageText: string;
-        if (data === 'Accepted' || (typeof data === 'object' && !data.reply)) {
-          sofiaMessageText = "Recebi a sua mensagem! Estou a processar, pode demorar alguns segundos...";
-        } else if (data.reply) {
-          sofiaMessageText = data.reply;
-        } else {
-          sofiaMessageText = "Desculpe, recebi uma resposta inesperada. Tente novamente.";
+        
+        // Tenta fazer parse como JSON
+        try {
+          const data = JSON.parse(responseText);
+          if (data.reply) {
+            sofiaMessageText = data.reply;
+          } else {
+            sofiaMessageText = "Recebi a sua mensagem! Estou a processar, pode demorar alguns segundos...";
+          }
+        } catch {
+          // Se não for JSON, verifica se é "Accepted"
+          if (responseText.trim() === 'Accepted') {
+            sofiaMessageText = "Recebi a sua mensagem! Estou a processar, pode demorar alguns segundos...";
+          } else {
+            sofiaMessageText = responseText || "Desculpe, recebi uma resposta inesperada.";
+          }
         }
         
         const sofiaResponse: Message = {
