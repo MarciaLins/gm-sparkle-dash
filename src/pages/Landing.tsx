@@ -75,8 +75,23 @@ export default function Landing() {
           throw new Error(`Erro de HTTP! Status: ${response.status}`);
         }
 
-        const data = await response.json();
-        const sofiaMessageText = data.reply || "Recebi uma resposta, mas o formato é inválido.";
+        // Usa text() primeiro para lidar com JSON mal formatado
+        const textResponse = await response.text();
+        let sofiaMessageText = "Recebi uma resposta, mas o formato é inválido.";
+        
+        try {
+          const data = JSON.parse(textResponse);
+          sofiaMessageText = data.reply || sofiaMessageText;
+        } catch (jsonError) {
+          // Se o JSON estiver mal formatado, tenta extrair a mensagem diretamente
+          const replyMatch = textResponse.match(/"reply"\s*:\s*"([^"]*)"/);
+          if (replyMatch) {
+            sofiaMessageText = replyMatch[1]
+              .replace(/\\n/g, '\n')
+              .replace(/\\t/g, '\t')
+              .replace(/\\"/g, '"');
+          }
+        }
         
         const sofiaResponse: Message = {
           id: messages.length + 3,
