@@ -8,8 +8,8 @@ import { useToast } from "@/hooks/use-toast";
 
 const Login = () => {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -18,35 +18,23 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithOtp({
         email,
-        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+        },
       });
 
       if (error) throw error;
 
-      // Verificar se o usuário tem role de admin
-      const { data: isAdmin } = await supabase
-        .rpc('has_role', { 
-          _user_id: data.user.id, 
-          _role: 'admin' 
-        });
-
-      if (!isAdmin) {
-        // Não é admin, fazer logout
-        await supabase.auth.signOut();
-        throw new Error("Acesso não autorizado. Apenas administradores podem acessar o sistema.");
-      }
-
+      setEmailSent(true);
       toast({
-        title: "Login bem-sucedido!",
-        description: "Redirecionando para o painel...",
+        title: "Email enviado!",
+        description: "Verifique sua caixa de entrada para fazer login.",
       });
-
-      navigate("/");
     } catch (error: any) {
       toast({
-        title: "Erro ao fazer login",
+        title: "Erro ao enviar email",
         description: error.message,
         variant: "destructive",
       });
@@ -69,37 +57,42 @@ const Login = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium">
-                Email
-              </label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="seu@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
+          {emailSent ? (
+            <div className="text-center space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Um link de acesso foi enviado para <strong>{email}</strong>
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Verifique sua caixa de entrada e clique no link para fazer login.
+              </p>
+              <Button 
+                variant="outline" 
+                onClick={() => setEmailSent(false)}
+                className="w-full"
+              >
+                Enviar novamente
+              </Button>
             </div>
-            <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium">
-                Senha
-              </label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Entrando..." : "Entrar"}
-            </Button>
-          </form>
+          ) : (
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-2">
+                <label htmlFor="email" className="text-sm font-medium">
+                  Email
+                </label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="seu@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Enviando..." : "Enviar Link de Acesso"}
+              </Button>
+            </form>
+          )}
         </CardContent>
       </Card>
     </div>
