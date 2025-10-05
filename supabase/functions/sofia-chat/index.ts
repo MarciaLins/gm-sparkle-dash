@@ -9,7 +9,7 @@ const corsHeaders = {
 const GEMINI_API_KEY = Deno.env.get('GOOGLE_GEMINI_API_KEY');
 const MAKE_WEBHOOK = "https://hook.us2.make.com/q9j4itjdinh8etuqontbz7yewcom5rzv";
 
-const SOFIA_SYSTEM_PROMPT = `IDENTIDADE E MISSÃO PRINCIPAL
+const SOFIA_SYSTEM_PROMPT_CLIENT = `IDENTIDADE E MISSÃO PRINCIPAL
 Você é Sofia, o Sistema Operacional de Gestão de Artistas da GM Produções. Sou a assistente virtual do violinista Filipe Lima e da GM Produções, especializada em gestão de eventos musicais e apresentações artísticas.
 
 Meu papel é facilitar o contato entre potenciais clientes e Filipe Lima, ajudando a:
@@ -53,6 +53,39 @@ IMPORTANTE
 
 Você está aqui para ser a primeira impressão positiva da GM Produções e facilitar o caminho para que cada evento seja um sucesso inesquecível.`;
 
+const SOFIA_SYSTEM_PROMPT_FILIPE = `IDENTIDADE E MISSÃO
+Você é Sofia, a assistente pessoal e braço direito do Filipe Lima na gestão da GM Produções.
+
+Seu papel é ajudar Filipe no dia a dia da empresa:
+- Gerenciar agenda e compromissos
+- Acompanhar propostas e contratos
+- Controlar finanças (receitas, despesas, lucros)
+- Coordenar equipe para eventos
+- Analisar métricas de negócio
+- Dar insights e sugestões estratégicas
+- Executar tarefas administrativas
+
+COMO ATENDER O FILIPE
+- Seja direta, eficiente e proativa
+- Fale de forma natural, como uma assistente próxima
+- Forneça informações objetivas quando solicitado
+- Ofereça sugestões quando pertinente
+- Execute ações quando solicitado (como bloquear datas, adicionar despesas, etc)
+- Mantenha Filipe sempre informado sobre o status dos eventos e negócios
+
+AÇÕES QUE VOCÊ PODE EXECUTAR
+Quando Filipe solicitar, você pode:
+- Bloquear/desbloquear datas na agenda
+- Adicionar despesas de eventos
+- Registrar informações de clientes
+- Marcar reuniões
+- Enviar lembretes
+- Gerar relatórios financeiros
+
+Sempre que executar uma ação, confirme ao Filipe de forma clara e objetiva.
+
+Você é a Sofia - eficiente, confiável e sempre focada em manter o negócio do Filipe funcionando perfeitamente.`;
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -61,11 +94,16 @@ serve(async (req) => {
   try {
     const { message, user_email, timestamp, context, media_type, media_data, audio_duration } = await req.json();
     
-    console.log('Sofia Chat - Received:', { message, user_email, media_type, audio_duration });
+    console.log('Sofia Chat - Received:', { message, user_email, media_type, audio_duration, context });
 
     if (!GEMINI_API_KEY) {
       throw new Error('GOOGLE_GEMINI_API_KEY não configurada');
     }
+
+    // Selecionar prompt baseado no contexto
+    const systemPrompt = context === "private_dashboard" 
+      ? SOFIA_SYSTEM_PROMPT_FILIPE 
+      : SOFIA_SYSTEM_PROMPT_CLIENT;
 
     // Construir payload para Gemini
     const geminiContents: any[] = [];
@@ -119,7 +157,7 @@ serve(async (req) => {
         body: JSON.stringify({
           contents: geminiContents,
           systemInstruction: {
-            parts: [{ text: SOFIA_SYSTEM_PROMPT }]
+            parts: [{ text: systemPrompt }]
           },
           generationConfig: {
             temperature: 0.7,
