@@ -16,7 +16,7 @@ interface Message {
   audioDuration?: number;
 }
 
-const WEBHOOK_URL = "https://hook.us2.make.com/q9j4itjdinh8etuqontbz7yewcom5rzv";
+const CHAT_URL = "https://vtjoeazrgdqvubytwogh.supabase.co/functions/v1/sofia-chat";
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
 const MAX_AUDIO_DURATION = 120 * 1000; // 2 minutes in ms
 
@@ -56,7 +56,7 @@ export const ChatPanel = () => {
     });
   };
 
-  const sendToWebhook = async (
+  const sendToChatAPI = async (
     message: string,
     mediaType: "text" | "image" | "audio",
     mediaData?: string,
@@ -73,20 +73,31 @@ export const ChatPanel = () => {
     };
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 25000);
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
 
     try {
-      const response = await fetch(WEBHOOK_URL, {
+      const response = await fetch(CHAT_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0am9lYXpyZ2RxdnVieXR3b2doIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzMzQ5NzksImV4cCI6MjA3NDkxMDk3OX0.lMVpDTLNsk_nPCn3QCiGJ0o7TbY-hJEiQWtjJcxeV6k`
+        },
         body: JSON.stringify(payload),
         signal: controller.signal,
       });
 
       clearTimeout(timeoutId);
 
+      if (response.status === 429) {
+        throw new Error("Sofia está ocupada no momento. Tente novamente em alguns segundos.");
+      }
+      
+      if (response.status === 402) {
+        throw new Error("Limite de uso atingido. Entre em contato com o suporte.");
+      }
+
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`Erro no servidor. Status: ${response.status}`);
       }
 
       const data = await response.json();
@@ -96,7 +107,7 @@ export const ChatPanel = () => {
       if (error.name === "AbortError") {
         throw new Error("Sofia não respondeu a tempo. Tente novamente.");
       }
-      throw new Error("Erro de conexão. Verifique sua internet.");
+      throw error;
     }
   };
 
@@ -125,7 +136,7 @@ export const ChatPanel = () => {
       };
       setMessages((prev) => [...prev, userMessage]);
 
-      const reply = await sendToWebhook("Imagem enviada", "image", base64);
+      const reply = await sendToChatAPI("Imagem enviada", "image", base64);
 
       const botResponse: Message = {
         id: messages.length + 2,
@@ -190,7 +201,7 @@ export const ChatPanel = () => {
           };
           setMessages((prev) => [...prev, userMessage]);
 
-          const reply = await sendToWebhook(`Áudio gravado (${duration}s)`, "audio", base64, duration);
+          const reply = await sendToChatAPI(`Áudio gravado (${duration}s)`, "audio", base64, duration);
 
           const botResponse: Message = {
             id: messages.length + 2,
@@ -260,7 +271,7 @@ export const ChatPanel = () => {
       setIsLoading(true);
 
       try {
-        const reply = await sendToWebhook(messageText, "text");
+        const reply = await sendToChatAPI(messageText, "text");
 
         const botResponse: Message = {
           id: messages.length + 2,
