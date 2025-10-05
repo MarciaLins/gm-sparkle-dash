@@ -67,7 +67,7 @@ const Index = () => {
               <span className="bg-gradient-to-r from-accent to-amber-400 bg-clip-text text-transparent">
                 Dashboard
               </span>
-              <span className="text-foreground"> | GM Produtora</span>
+              <span className="text-foreground"> | Filipe Lima</span>
             </h1>
           </div>
         </header>

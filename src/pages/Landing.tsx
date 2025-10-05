@@ -22,7 +22,7 @@ export default function Landing() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
-      text: "Olá! Sou o Assistente de Filipe, da GM Produtora. Como posso ajudá-lo hoje?",
+      text: "Olá! Sou o Assistente de Filipe Lima. Como posso ajudá-lo hoje?",
       sender: "assistant",
       timestamp: new Date(),
     },

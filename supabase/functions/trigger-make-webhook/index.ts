@@ -81,7 +81,7 @@ Deno.serve(async (req) => {
       dados,
       metadata: {
         app_version: '1.0.0',
-        source: 'gm-produtora-app'
+        source: 'filipe-lima-app'
       }
     };
 

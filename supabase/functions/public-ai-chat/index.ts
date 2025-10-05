@@ -24,7 +24,7 @@ serve(async (req) => {
     console.log('Received public chat request with', messages?.length || 0, 'messages');
 
     // System context for public landing page
-    const systemContext = `Você é um assistente virtual da GM Produtora, liderada por Filipe Lima, um violinista talentoso.
+    const systemContext = `Você é um assistente virtual de Filipe Lima, um violinista talentoso.
 
 Sua personalidade:
 - Profissional, mas calorosa e amigável
@@ -39,8 +39,8 @@ Suas responsabilidades:
 - Ajudar potenciais clientes a entender qual pacote melhor atende suas necessidades
 
 Contexto do negócio:
-- GM Produtora oferece serviços de violino para eventos (casamentos, festas corporativas, eventos sociais)
-- A empresa gerencia uma equipe de profissionais (músicos, técnicos, etc.)
+- Filipe Lima oferece serviços de violino para eventos (casamentos, festas corporativas, eventos sociais)
+- Gerencia uma equipe de profissionais (músicos, técnicos, etc.)
 - Trabalha com orçamentos, propostas e negociações com clientes
 
 PACOTES DE SERVIÇOS DISPONÍVEIS:
