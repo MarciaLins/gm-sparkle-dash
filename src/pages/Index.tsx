@@ -1,6 +1,5 @@
 import { Layout } from "@/components/Layout";
 import { MetricCard } from "@/components/MetricCard";
-import { ChatPanel } from "@/components/ChatPanel";
 import { EventsAndTasks } from "@/components/EventsAndTasks";
 import { DollarSign, TrendingUp, Users } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -60,36 +59,28 @@ const Index = () => {
 
         {/* Main Content */}
         <div className="container mx-auto px-6 py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6">
-            {/* Left Section - 70% */}
-            <div className="space-y-6">
-              {/* Metric Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <MetricCard
-                  title="Faturamento (Mês)"
-                  value={`R$ ${faturamentoMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-                  icon={DollarSign}
-                />
-                <MetricCard
-                  title="Lucro Líquido (Mês)"
-                  value={`R$ ${lucroMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-                  icon={TrendingUp}
-                />
-                <MetricCard
-                  title="Novos Leads"
-                  value={clientes?.toString() || "0"}
-                  icon={Users}
-                />
-              </div>
-
-              {/* Events and Tasks */}
-              <EventsAndTasks />
+          <div className="space-y-6">
+            {/* Metric Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <MetricCard
+                title="Faturamento (Mês)"
+                value={`R$ ${faturamentoMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                icon={DollarSign}
+              />
+              <MetricCard
+                title="Lucro Líquido (Mês)"
+                value={`R$ ${lucroMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                icon={TrendingUp}
+              />
+              <MetricCard
+                title="Novos Leads"
+                value={clientes?.toString() || "0"}
+                icon={Users}
+              />
             </div>
 
-            {/* Right Section - 30% */}
-            <div className="lg:h-[calc(100vh-120px)] lg:sticky lg:top-[88px]">
-              <ChatPanel />
-            </div>
+            {/* Events and Tasks */}
+            <EventsAndTasks />
           </div>
         </div>
       </div>
