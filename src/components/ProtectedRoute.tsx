@@ -18,6 +18,7 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
   const checkAuth = async () => {
     try {
+      // Verificar se está autenticado
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
@@ -25,6 +26,7 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
         return;
       }
 
+      // Verificar se tem role de admin
       const { data, error } = await supabase
         .rpc('has_role', { 
           _user_id: session.user.id, 
@@ -34,6 +36,7 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
       if (error) throw error;
 
       if (!data) {
+        // Não é admin, fazer logout e redirecionar
         await supabase.auth.signOut();
         navigate("/login");
         return;
