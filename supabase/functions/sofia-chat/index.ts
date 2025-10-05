@@ -359,9 +359,11 @@ serve(async (req) => {
       sofiaReply.toLowerCase().includes(keyword.toLowerCase())
     );
 
-    if (hasAction) {
-      console.log('Ação detectada, notificando Make.com...');
-      // Selecionar webhook baseado no contexto
+    // Notificar Make.com
+    // Landing page: sempre notifica (vendas)
+    // Dashboard: apenas quando há ação
+    if (context === "landing_page" || hasAction) {
+      console.log('Notificando Make.com...');
       const webhookUrl = context === "landing_page" ? MAKE_WEBHOOK_LANDING : MAKE_WEBHOOK_DASHBOARD;
       
       try {
@@ -369,7 +371,7 @@ serve(async (req) => {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            action: 'sofia_action_detected',
+            action: context === "landing_page" ? 'nova_conversa_cliente' : 'sofia_action_detected',
             message: message,
             sofia_response: sofiaReply,
             user_email: user_email,
