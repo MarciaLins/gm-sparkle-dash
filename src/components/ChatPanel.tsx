@@ -42,12 +42,18 @@ export const ChatPanel = () => {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (scrollAreaRef.current) {
-      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
-      if (scrollContainer) {
-        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+    const scrollToBottom = () => {
+      if (scrollAreaRef.current) {
+        const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+        if (scrollContainer) {
+          setTimeout(() => {
+            scrollContainer.scrollTop = scrollContainer.scrollHeight;
+          }, 100);
+        }
       }
-    }
+    };
+    
+    scrollToBottom();
   }, [messages]);
 
   const convertFileToBase64 = (file: File): Promise<string> => {
