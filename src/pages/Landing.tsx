@@ -1,14 +1,13 @@
-import { useState, useEffect, useRef } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { MessageCircle, Send, Quote } from "lucide-react";
-import logoFilipeLima from "@/assets/filipe-lima-logo.jpg";
 
-// URL de Imagem de placeholder para a foto
+// URLs de Imagens de placeholder para evitar erros de compilação
+const logoFilipeLima = "https://placehold.co/100x100/1A1B1E/FCB900?text=FL";
 const filipeLimaPhoto = "https://placehold.co/450x600/1A1B1E/FCB900?text=Filipe+Lima";
 
 interface Message {
@@ -29,62 +28,9 @@ export default function Landing() {
     },
   ]);
   const [input, setInput] = useState("");
-  const conversationIdRef = useRef<string | null>(null);
 
-  // URL do webhook do Make para Sofia vendedora
-  const MAKE_WEBHOOK_URL = "https://hook.us2.make.com/ngw41roxe6sx7txxqmfn8mae305618tt";
-
-  // Gerar conversationId quando o chat abre
-  useEffect(() => {
-    if (chatOpen && !conversationIdRef.current) {
-      conversationIdRef.current = crypto.randomUUID();
-      console.log('Nova conversa iniciada:', conversationIdRef.current);
-    }
-  }, [chatOpen]);
-
-  // Subscrever ao Realtime para receber respostas da Sofia
-  useEffect(() => {
-    if (!conversationIdRef.current) return;
-
-    console.log('Subscrevendo ao Realtime para conversation:', conversationIdRef.current);
-
-    const channel = supabase
-      .channel('sofia-messages')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'sofia_messages',
-          filter: `conversation_id=eq.${conversationIdRef.current}`
-        },
-        (payload) => {
-          console.log('Nova mensagem recebida via Realtime:', payload);
-          
-          const newMessage = payload.new as any;
-          
-          // Remover mensagem de "a processar" e adicionar resposta real
-          setMessages(prev => {
-            const filtered = prev.filter(m => 
-              !(m.sender === 'sofia' && m.text.includes('a processar'))
-            );
-            
-            return [...filtered, {
-              id: parseInt(newMessage.id),
-              text: newMessage.sofia_response,
-              sender: 'sofia' as const,
-              timestamp: new Date(newMessage.created_at)
-            }];
-          });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      console.log('Unsubscribing from Realtime');
-      supabase.removeChannel(channel);
-    };
-  }, [conversationIdRef.current]);
+  // A URL do Webhook do Make.com (já configurada)
+  const MAKE_WEBHOOK_URL = "https://hook.us2.make.com/w9x6b127jopvrsyudcvj5ohydiktbkgt";
 
   const handleSend = async () => {
     if (input.trim()) {
@@ -95,6 +41,7 @@ export default function Landing() {
         timestamp: new Date(),
       };
       
+      // Adiciona a mensagem do utilizador e uma de "a pensar"
       setMessages((prev) => [
         ...prev,
         userMessage,
@@ -108,8 +55,9 @@ export default function Landing() {
       const currentInput = input;
       setInput("");
 
+      // Controlador de timeout para ser mais paciente
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 25000); // Espera 25 segundos
+      const timeoutId = setTimeout(() => controller.abort(), 25000); // Espera até 25 segundos
 
       try {
         const response = await fetch(MAKE_WEBHOOK_URL, {
@@ -117,33 +65,30 @@ export default function Landing() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ 
-            message: currentInput,
-            conversationId: conversationIdRef.current
-          }),
+          body: JSON.stringify({ message: currentInput }),
           signal: controller.signal,
         });
 
-        clearTimeout(timeoutId);
+        clearTimeout(timeoutId); // Limpa o timeout se a resposta chegar a tempo
 
         if (!response.ok) {
           throw new Error(`Erro de HTTP! Status: ${response.status}`);
         }
 
-        // Mostrar apenas mensagem de "a processar"
-        // A resposta real virá via Realtime
-        console.log('Mensagem enviada para Make.com com conversationId:', conversationIdRef.current);
+        const data = await response.json();
+        const sofiaMessageText = data.reply || "Recebi uma resposta, mas o formato é inválido.";
         
-        const processingMessage: Message = {
+        const sofiaResponse: Message = {
           id: messages.length + 3,
-          text: "Recebi a sua mensagem! Estou a processar, pode demorar alguns segundos...",
+          text: sofiaMessageText,
           sender: "sofia",
           timestamp: new Date(),
         };
 
+        // Substitui a mensagem de "a pensar" pela resposta final
         setMessages((prev) => [
           ...prev.slice(0, -1),
-          processingMessage,
+          sofiaResponse,
         ]);
 
       } catch (error) {
@@ -160,6 +105,7 @@ export default function Landing() {
           sender: "sofia",
           timestamp: new Date(),
         };
+        // Substitui a mensagem de "a pensar" pela mensagem de erro
          setMessages((prev) => [
           ...prev.slice(0, -1),
           errorResponse,
