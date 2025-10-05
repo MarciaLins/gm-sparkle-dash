@@ -5,6 +5,3 @@ verify_jwt = true
 
 [functions.public-ai-chat]
 verify_jwt = false
-
-[functions.trigger-make-webhook]
-verify_jwt = true

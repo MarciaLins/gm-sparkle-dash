@@ -14,7 +14,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { z } from "zod";
-import { useWebhookTrigger } from "@/hooks/useWebhookTrigger";
 
 const transacaoSchema = z.object({
   descricao: z.string().trim().min(1, "Descrição é obrigatória").max(200),
@@ -30,7 +29,6 @@ const Financeiro = () => {
   const [valor, setValor] = useState("");
   const [tipo, setTipo] = useState("");
   const queryClient = useQueryClient();
-  const { trigger } = useWebhookTrigger();
 
   const { data: transacoes } = useQuery({
     queryKey: ['financeiro', mesFilter, categoriaFilter],
@@ -59,19 +57,10 @@ const Financeiro = () => {
       
       if (error) throw error;
     },
-    onSuccess: async (_, variables) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['financeiro'] });
       queryClient.invalidateQueries({ queryKey: ['financeiro-dashboard'] });
       toast({ title: "Transação adicionada com sucesso!" });
-      
-      // Disparar webhook Make
-      await trigger('nova_transacao', {
-        descricao: variables.descricao,
-        valor: variables.valor,
-        tipo: variables.tipo,
-        categoria: variables.categoria
-      });
-      
       setOpen(false);
       setDescricao("");
       setValor("");

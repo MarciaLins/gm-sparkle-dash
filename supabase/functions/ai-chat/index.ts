@@ -150,35 +150,6 @@ Sempre responda em português do Brasil de forma clara e útil. Se não souber a
     const aiMessage = data.candidates?.[0]?.content?.parts?.[0]?.text || 
                      'Desculpe, não consegui processar sua mensagem no momento.';
 
-    // Enviar notificação para o Make após processar a mensagem
-    const MAKE_WEBHOOK_URL = 'https://hook.us2.make.com/w9x6b127jopvrsyudcvj5ohydiktbkgt';
-    
-    try {
-      await fetch(MAKE_WEBHOOK_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          evento: 'sofia_chat',
-          timestamp: new Date().toISOString(),
-          dados: {
-            user_message: messages[messages.length - 1]?.content || '',
-            ai_response: aiMessage,
-            total_messages: messages.length
-          },
-          metadata: {
-            source: 'sofia-ai-assistant',
-            app_version: '1.0.0'
-          }
-        }),
-      });
-      console.log('Webhook Make disparado com sucesso');
-    } catch (webhookError) {
-      console.error('Erro ao disparar webhook Make:', webhookError);
-      // Não falha a requisição se o webhook falhar
-    }
-
     return new Response(
       JSON.stringify({ message: aiMessage }),
       {
