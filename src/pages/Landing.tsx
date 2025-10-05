@@ -7,12 +7,16 @@ import { Input } from "@/components/ui/input";
 import { MessageCircle, Send, Quote } from "lucide-react";
 import filipeLimaImage from "@/assets/filipe-lima-photo.jpg";
 import filipeLimaMain from "@/assets/filipe-lima-main.jpg";
+import { MapDisplay } from "@/components/MapDisplay";
 
 interface Message {
   id: number;
   text: string;
   sender: "user" | "sofia";
   timestamp: Date;
+  mediaType?: "text" | "map";
+  mapLocation?: string;
+  mapDescription?: string;
 }
 
 export default function Landing() {
@@ -102,6 +106,11 @@ export default function Landing() {
           text: sofiaMessageText,
           sender: "sofia",
           timestamp: new Date(),
+          mediaType: data.map ? "map" : "text",
+          ...(data.map && {
+            mapLocation: data.map.location,
+            mapDescription: data.map.description
+          })
         };
 
         setMessages((prev) => [
@@ -273,8 +282,16 @@ export default function Landing() {
                       message.sender === "user"
                         ? "bg-accent text-accent-foreground"
                         : "bg-secondary text-secondary-foreground"
-                    }`}
+                     }`}
                   >
+                    {message.mediaType === "map" && message.mapLocation && (
+                      <div className="mb-2">
+                        <MapDisplay 
+                          location={message.mapLocation} 
+                          description={message.mapDescription}
+                        />
+                      </div>
+                    )}
                     <p className="text-sm">{message.text}</p>
                     <span className="text-xs opacity-60 mt-1 block">
                       {message.timestamp.toLocaleTimeString("pt-BR", {

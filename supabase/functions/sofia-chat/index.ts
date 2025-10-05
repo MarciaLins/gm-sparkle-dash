@@ -122,6 +122,32 @@ serve(async (req) => {
     
     const systemPrompt = `${basePrompt}\n\nDATA E HORA ATUAL: Hoje é ${dataAtual}, são ${horaAtual} (horário de Recife/Pernambuco).`;
 
+    // Definir tools para Google Maps
+    const tools = [
+      {
+        functionDeclarations: [
+          {
+            name: "show_map",
+            description: "Mostra um mapa com a localização de um evento. Use quando o usuário mencionar um local, endereço ou perguntar sobre localização.",
+            parameters: {
+              type: "OBJECT",
+              properties: {
+                location: {
+                  type: "STRING",
+                  description: "Nome do local ou endereço completo do evento"
+                },
+                description: {
+                  type: "STRING",
+                  description: "Descrição breve sobre o local ou evento"
+                }
+              },
+              required: ["location"]
+            }
+          }
+        ]
+      }
+    ];
+
     // Construir payload para Gemini
     const geminiContents: any[] = [];
 
@@ -176,6 +202,7 @@ serve(async (req) => {
           systemInstruction: {
             parts: [{ text: systemPrompt }]
           },
+          tools: tools,
           generationConfig: {
             temperature: 0.7,
             maxOutputTokens: 2048,
@@ -200,7 +227,20 @@ serve(async (req) => {
     const geminiData = await geminiResponse.json();
     console.log('Gemini response received');
     
-    const sofiaReply = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || "Desculpe, não consegui processar sua mensagem.";
+    // Verificar se há tool call (mapa)
+    const parts = geminiData.candidates?.[0]?.content?.parts || [];
+    const functionCall = parts.find((part: any) => part.functionCall);
+    
+    let sofiaReply = parts.find((part: any) => part.text)?.text || "Desculpe, não consegui processar sua mensagem.";
+    let mapData = null;
+    
+    if (functionCall && functionCall.functionCall.name === "show_map") {
+      mapData = {
+        location: functionCall.functionCall.args.location,
+        description: functionCall.functionCall.args.description || ""
+      };
+      console.log('Map data:', mapData);
+    }
 
     // Detectar ações que precisam notificar Make.com
     const actionKeywords = [
@@ -260,7 +300,10 @@ serve(async (req) => {
     console.log('Resposta enviada com sucesso');
 
     return new Response(
-      JSON.stringify({ reply: sofiaReply }),
+      JSON.stringify({ 
+        reply: sofiaReply,
+        ...(mapData && { map: mapData })
+      }),
       { 
         headers: { 
           ...corsHeaders, 

@@ -5,15 +5,18 @@ import { Button } from "@/components/ui/button";
 import { Send, Mic, Paperclip, Camera, Loader2, Image as ImageIcon, AudioLines } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
+import { MapDisplay } from "./MapDisplay";
 
 interface Message {
   id: number;
   text: string;
   sender: "user" | "bot";
   timestamp: Date;
-  mediaType?: "text" | "image" | "audio";
+  mediaType?: "text" | "image" | "audio" | "map";
   mediaData?: string;
   audioDuration?: number;
+  mapLocation?: string;
+  mapDescription?: string;
 }
 
 const CHAT_URL = "https://vtjoeazrgdqvubytwogh.supabase.co/functions/v1/sofia-chat";
@@ -110,7 +113,7 @@ export const ChatPanel = () => {
       }
 
       const data = await response.json();
-      return data.reply || "Recebido! Processando sua solicitação...";
+      return data;
     } catch (error: any) {
       clearTimeout(timeoutId);
       if (error.name === "AbortError") {
@@ -280,14 +283,18 @@ export const ChatPanel = () => {
       setIsLoading(true);
 
       try {
-        const reply = await sendToChatAPI(messageText, "text");
+        const response = await sendToChatAPI(messageText, "text");
 
         const botResponse: Message = {
           id: messages.length + 2,
-          text: reply,
+          text: response.reply || response,
           sender: "bot",
           timestamp: new Date(),
-          mediaType: "text",
+          mediaType: response.map ? "map" : "text",
+          ...(response.map && {
+            mapLocation: response.map.location,
+            mapDescription: response.map.description
+          })
         };
         setMessages((prev) => [...prev, botResponse]);
       } catch (error: any) {
@@ -336,6 +343,14 @@ export const ChatPanel = () => {
                       <span className="text-xs">
                         {message.audioDuration}s
                       </span>
+                    </div>
+                  )}
+                  {message.mediaType === "map" && message.mapLocation && (
+                    <div className="mb-2">
+                      <MapDisplay 
+                        location={message.mapLocation} 
+                        description={message.mapDescription}
+                      />
                     </div>
                   )}
                   <p className="text-sm">{message.text}</p>
