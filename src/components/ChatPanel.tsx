@@ -46,7 +46,7 @@ export const ChatPanel = () => {
     console.log("Gravação de áudio iniciada");
   };
 
-  const handleSend = async () => {
+  const handleSend = () => {
     if (input.trim()) {
       const newMessage: Message = {
         id: messages.length + 1,
@@ -55,25 +55,7 @@ export const ChatPanel = () => {
         timestamp: new Date(),
       };
       setMessages([...messages, newMessage]);
-      
-      const messageText = input;
       setInput("");
-
-      // Send to Make webhook
-      try {
-        await fetch("https://hook.us2.make.com/ty7sh91e2k3mvd9mir2e417cyh5mfw4c", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            message: messageText,
-            timestamp: new Date().toISOString(),
-          }),
-        });
-      } catch (error) {
-        console.error("Erro ao enviar para webhook:", error);
-      }
 
       // Simulate bot response
       setTimeout(() => {
