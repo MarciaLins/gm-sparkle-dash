@@ -134,8 +134,20 @@ const Agenda = () => {
   // Combinar eventos do banco com feriados
   const todosEventos = useMemo<EventoAgenda[]>(() => {
     const eventos: EventoAgenda[] = eventosDB?.map(e => {
-      // Garantir que a data seja interpretada corretamente no fuso horário local
-      const dataEvento = e.data_inicio ? new Date(e.data_inicio) : new Date();
+      if (!e.data_inicio) {
+        return {
+          id: e.id,
+          title: e.nome_evento || 'Evento',
+          date: format(new Date(), 'yyyy-MM-dd'),
+          time: format(new Date(), 'HH:mm'),
+          location: e.local_evento || '',
+          type: 'evento' as const,
+          status: e.status_evento || undefined
+        };
+      }
+      
+      // Pegar a data/hora como string ISO e criar objeto Date
+      const dataEvento = new Date(e.data_inicio);
       
       return {
         id: e.id,
@@ -192,7 +204,7 @@ const Agenda = () => {
                 className="rounded-md"
                 modifiers={{
                   feriado: todosFeriados2025.map(f => f.date),
-                  evento: eventosDB?.map(e => e.data_inicio ? new Date(e.data_inicio) : new Date()) || []
+                  evento: todosEventos.filter(e => e.type === 'evento').map(e => new Date(e.date + 'T00:00:00'))
                 }}
                 modifiersStyles={{
                   feriado: { 
