@@ -18,12 +18,25 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) throw error;
+
+      // Verificar se o usuário tem role de admin
+      const { data: isAdmin } = await supabase
+        .rpc('has_role', { 
+          _user_id: data.user.id, 
+          _role: 'admin' 
+        });
+
+      if (!isAdmin) {
+        // Não é admin, fazer logout
+        await supabase.auth.signOut();
+        throw new Error("Acesso não autorizado. Apenas administradores podem acessar o sistema.");
+      }
 
       toast({
         title: "Login bem-sucedido!",
