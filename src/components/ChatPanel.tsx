@@ -3,9 +3,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Send, Mic, Paperclip, Camera } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { useState, useRef } from "react";
 
 interface Message {
   id: number;
@@ -14,42 +12,18 @@ interface Message {
   timestamp: Date;
 }
 
-interface ChatPanelProps {
-  initialMessage?: string;
-}
-
-export const ChatPanel = ({ initialMessage }: ChatPanelProps = {}) => {
+export const ChatPanel = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
-      text: "Olá, Filipe! Como posso ajudar você hoje?",
+      text: "Olá, Filipe! Sou a Sofia, da GM Produtora. Como posso ajudar você hoje?",
       sender: "bot",
       timestamp: new Date(),
     },
   ]);
   const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const { toast } = useToast();
-
-  // Auto-scroll to bottom when messages change
-  useEffect(() => {
-    if (scrollAreaRef.current) {
-      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
-      if (scrollContainer) {
-        scrollContainer.scrollTop = scrollContainer.scrollHeight;
-      }
-    }
-  }, [messages]);
-
-  // Pre-populate input when initialMessage changes
-  useEffect(() => {
-    if (initialMessage) {
-      setInput(initialMessage);
-    }
-  }, [initialMessage]);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -72,62 +46,27 @@ export const ChatPanel = ({ initialMessage }: ChatPanelProps = {}) => {
     console.log("Gravação de áudio iniciada");
   };
 
-  const handleSend = async () => {
-    if (input.trim() && !isLoading) {
-      const userMessage: Message = {
+  const handleSend = () => {
+    if (input.trim()) {
+      const newMessage: Message = {
         id: messages.length + 1,
         text: input,
         sender: "user",
         timestamp: new Date(),
       };
-      
-      const updatedMessages = [...messages, userMessage];
-      setMessages(updatedMessages);
+      setMessages([...messages, newMessage]);
       setInput("");
-      setIsLoading(true);
 
-      try {
-        // Prepare conversation history for AI
-        const conversationHistory = updatedMessages.map(msg => ({
-          role: msg.sender === "user" ? "user" : "assistant",
-          content: msg.text
-        }));
-
-        // Call AI edge function
-        const { data, error } = await supabase.functions.invoke('ai-chat', {
-          body: { messages: conversationHistory }
-        });
-
-        if (error) throw error;
-
+      // Simulate bot response
+      setTimeout(() => {
         const botResponse: Message = {
-          id: updatedMessages.length + 1,
-          text: data.message || "Desculpe, não consegui processar sua mensagem.",
+          id: messages.length + 2,
+          text: "Entendi! Estou processando sua solicitação...",
           sender: "bot",
           timestamp: new Date(),
         };
-        
-        setMessages(prev => [...prev, botResponse]);
-      } catch (error: any) {
-        console.error('Error calling AI:', error);
-        
-        toast({
-          title: "Erro ao processar mensagem",
-          description: "Não foi possível obter uma resposta. Tente novamente.",
-          variant: "destructive",
-        });
-
-        const errorMessage: Message = {
-          id: updatedMessages.length + 1,
-          text: "Desculpe, estou com dificuldades técnicas no momento. Por favor, tente novamente em alguns instantes.",
-          sender: "bot",
-          timestamp: new Date(),
-        };
-        
-        setMessages(prev => [...prev, errorMessage]);
-      } finally {
-        setIsLoading(false);
-      }
+        setMessages((prev) => [...prev, botResponse]);
+      }, 1000);
     }
   };
 
@@ -139,7 +78,7 @@ export const ChatPanel = ({ initialMessage }: ChatPanelProps = {}) => {
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col p-4 gap-4">
-        <ScrollArea className="flex-1 pr-4" ref={scrollAreaRef}>
+        <ScrollArea className="flex-1 pr-4">
           <div className="space-y-4">
             {messages.map((message) => (
               <div
@@ -212,15 +151,13 @@ export const ChatPanel = ({ initialMessage }: ChatPanelProps = {}) => {
             placeholder="Digite sua mensagem..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyPress={(e) => e.key === "Enter" && !isLoading && handleSend()}
+            onKeyPress={(e) => e.key === "Enter" && handleSend()}
             className="bg-secondary border-border"
-            disabled={isLoading}
           />
           <Button
             onClick={handleSend}
             size="icon"
             className="bg-accent text-accent-foreground hover:bg-accent/90"
-            disabled={isLoading}
           >
             <Send className="h-4 w-4" />
           </Button>

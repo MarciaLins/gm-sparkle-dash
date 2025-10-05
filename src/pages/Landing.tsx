@@ -1,19 +1,15 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { MessageCircle, Send, Quote } from "lucide-react";
-import logoFilipeLima from "@/assets/logo-filipe-lima.jpg";
-import filipeLimaVideo from "@/assets/filipe-lima-video.mp4";
-import filipeLimaPhoto from "@/assets/filipe-lima-photo.jpg";
-import { supabase } from "@/integrations/supabase/client";
 
 interface Message {
   id: number;
   text: string;
-  sender: "user" | "assistant";
+  sender: "user" | "sofia";
   timestamp: Date;
 }
 
@@ -22,91 +18,33 @@ export default function Landing() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
-      text: "Olá! Sou o Assistente de Filipe Lima. Como posso ajudá-lo hoje?",
-      sender: "assistant",
+      text: "Olá! Fico feliz com seu interesse. Para qual data e tipo de evento seria?",
+      sender: "sofia",
       timestamp: new Date(),
     },
   ]);
   const [input, setInput] = useState("");
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom when messages change
-  useEffect(() => {
-    if (scrollAreaRef.current) {
-      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
-      if (scrollContainer) {
-        scrollContainer.scrollTop = scrollContainer.scrollHeight;
-      }
-    }
-  }, [messages]);
-
-  const handleSend = async () => {
+  const handleSend = () => {
     if (input.trim()) {
-      const userMessage: Message = {
+      const newMessage: Message = {
         id: messages.length + 1,
         text: input,
         sender: "user",
         timestamp: new Date(),
       };
-      
-      // Adiciona a mensagem do usuário e uma mensagem de "pensando..."
-      setMessages((prev) => [
-        ...prev,
-        userMessage,
-        {
-          id: prev.length + 2,
-          text: "Assistente está digitando...",
-          sender: "assistant",
-          timestamp: new Date(),
-        },
-      ]);
-      
+      setMessages([...messages, newMessage]);
       setInput("");
 
-      try {
-        // Constrói o histórico completo de mensagens para enviar à IA
-        const conversationHistory = [...messages, userMessage].map(msg => ({
-          role: msg.sender === "user" ? "user" : "assistant",
-          content: msg.text
-        }));
-
-        // Chama a edge function public-ai-chat (pública) com Google Gemini
-        const { data, error } = await supabase.functions.invoke('public-ai-chat', {
-          body: { messages: conversationHistory }
-        });
-
-        if (error) {
-          throw new Error(error.message || "Erro na comunicação com o Assistente.");
-        }
-
-        const assistantResponse: Message = {
-          id: messages.length + 3,
-          text: data.message || "Desculpe, não consegui processar a resposta.",
-          sender: "assistant",
+      setTimeout(() => {
+        const botResponse: Message = {
+          id: messages.length + 2,
+          text: "Entendi! Estou processando sua solicitação...",
+          sender: "sofia",
           timestamp: new Date(),
         };
-
-        // Remove a mensagem "digitando..." e adiciona a resposta final
-        setMessages((prev) => [
-          ...prev.slice(0, -1),
-          assistantResponse,
-        ]);
-
-      } catch (error) {
-        console.error("Erro:", error);
-        const errorResponse: Message = {
-          id: messages.length + 3,
-          text: "Desculpe, estou com um problema técnico no momento. Tente novamente mais tarde.",
-          sender: "assistant",
-          timestamp: new Date(),
-        };
-        
-        // Remove a mensagem "digitando..." e adiciona a mensagem de erro
-        setMessages((prev) => [
-          ...prev.slice(0, -1),
-          errorResponse,
-        ]);
-      }
+        setMessages((prev) => [...prev, botResponse]);
+      }, 1000);
     }
   };
 
@@ -115,12 +53,8 @@ export default function Landing() {
       {/* Header Section */}
       <header className="bg-card border-b border-border py-6 px-4 md:px-8">
         <div className="max-w-7xl mx-auto flex items-center gap-6">
-          <div className="w-24 h-24 rounded-lg overflow-hidden">
-            <img 
-              src={logoFilipeLima} 
-              alt="Filipe Lima Logo" 
-              className="w-full h-full object-contain"
-            />
+          <div className="w-16 h-16 bg-accent/10 rounded-lg flex items-center justify-center border border-accent/20">
+            <span className="text-2xl font-bold text-accent">FL</span>
           </div>
           <div>
             <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-accent to-amber-400 bg-clip-text text-transparent">
@@ -136,26 +70,19 @@ export default function Landing() {
       {/* About Section */}
       <section className="py-20 px-4 md:px-8 bg-card">
         <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center">
-          <div className="order-2 md:order-1 relative">
-            <div className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none">
-              <img 
-                src={logoFilipeLima} 
-                alt="Watermark" 
-                className="w-full h-auto object-contain"
-              />
-            </div>
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-accent to-amber-400 bg-clip-text text-transparent relative z-10">
+          <div className="order-2 md:order-1">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-accent to-amber-400 bg-clip-text text-transparent">
               Sobre Filipe Lima
             </h2>
-            <p className="text-lg text-muted-foreground leading-relaxed mb-4 relative z-10">
+            <p className="text-lg text-muted-foreground leading-relaxed mb-4">
               Com mais de 13 anos de experiência, Filipe Lima é um violinista renomado que já encantou
               milhares de pessoas em casamentos, eventos corporativos e apresentações especiais.
             </p>
-            <p className="text-lg text-muted-foreground leading-relaxed mb-4 relative z-10">
+            <p className="text-lg text-muted-foreground leading-relaxed mb-4">
               Sua versatilidade musical abrange desde o clássico erudito até músicas contemporâneas,
               sempre com a elegância e sensibilidade que transformam momentos em memórias inesquecíveis.
             </p>
-            <p className="text-lg text-muted-foreground leading-relaxed relative z-10">
+            <p className="text-lg text-muted-foreground leading-relaxed">
               Cada apresentação é cuidadosamente personalizada para refletir a essência do seu evento,
               criando uma atmosfera única e sofisticada.
             </p>
@@ -163,7 +90,7 @@ export default function Landing() {
           <div className="order-1 md:order-2">
             <div className="relative aspect-[3/4] rounded-lg overflow-hidden shadow-[0_0_40px_rgba(252,211,77,0.2)]">
               <img
-                src={filipeLimaPhoto}
+                src="https://images.unsplash.com/photo-1465847899084-d164df4dedc6?auto=format&fit=crop&w=800&q=80"
                 alt="Filipe Lima Violinista"
                 className="w-full h-full object-cover"
               />
@@ -214,29 +141,24 @@ export default function Landing() {
       </section>
 
       {/* Floating Chat Button */}
-      <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3">
-        <div className="bg-accent text-accent-foreground px-4 py-2 rounded-lg shadow-lg animate-fade-in hidden md:block">
-          <p className="text-sm font-medium whitespace-nowrap">Converse com o Assistente!</p>
-        </div>
-        <Button
-          onClick={() => setChatOpen(true)}
-          size="icon"
-          className="h-20 w-20 rounded-full bg-gradient-to-r from-accent to-amber-400 hover:shadow-[0_0_40px_rgba(252,211,77,0.6)] transition-all duration-300 hover:scale-110"
-        >
-          <MessageCircle className="h-10 w-10 text-primary-foreground" />
-        </Button>
-      </div>
+      <Button
+        onClick={() => setChatOpen(true)}
+        size="icon"
+        className="fixed bottom-6 right-6 h-16 w-16 rounded-full bg-gradient-to-r from-accent to-amber-400 hover:shadow-[0_0_40px_rgba(252,211,77,0.4)] transition-all duration-300 z-50"
+      >
+        <MessageCircle className="h-8 w-8 text-primary-foreground" />
+      </Button>
 
       {/* Chat Dialog */}
       <Dialog open={chatOpen} onOpenChange={setChatOpen}>
         <DialogContent className="sm:max-w-[500px] h-[600px] flex flex-col p-0 bg-card border-accent/20">
           <DialogHeader className="border-b border-border p-6">
             <DialogTitle className="text-xl font-semibold bg-gradient-to-r from-accent to-amber-400 bg-clip-text text-transparent">
-              Assistente de Filipe
+              Sofia, assistente pessoal do Filipe Lima
             </DialogTitle>
           </DialogHeader>
           
-          <ScrollArea className="flex-1 p-6" ref={scrollAreaRef}>
+          <ScrollArea className="flex-1 p-6">
             <div className="space-y-4">
               {messages.map((message) => (
                 <div
@@ -286,5 +208,3 @@ export default function Landing() {
     </div>
   );
 }
-  
-        

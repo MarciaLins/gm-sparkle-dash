@@ -1,8 +1,6 @@
-import { Calendar, Users, DollarSign, Briefcase, Settings, LayoutDashboard, Package, LogOut } from "lucide-react";
+import { Calendar, Users, DollarSign, Briefcase, Settings, LayoutDashboard, Package } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/contexts/AuthProvider";
-import { Button } from "@/components/ui/button";
 
 const navItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
@@ -15,24 +13,17 @@ const navItems = [
 ];
 
 export const Navigation = () => {
-  const { signOut, user } = useAuth();
-
   return (
-    <nav className="w-64 min-h-screen bg-card border-r border-border p-6 sticky top-0 flex flex-col">
+    <nav className="w-64 min-h-screen bg-card border-r border-border p-6 sticky top-0">
       <div className="mb-8">
         <h2 className="text-xl font-bold">
           <span className="bg-gradient-to-r from-accent to-amber-400 bg-clip-text text-transparent">
-            Filipe Lima
+            GM Produtora
           </span>
         </h2>
-        {user?.email && (
-          <p className="text-xs text-muted-foreground mt-2 truncate">
-            {user.email}
-          </p>
-        )}
       </div>
       
-      <ul className="space-y-2 flex-1">
+      <ul className="space-y-2">
         {navItems.map((item) => (
           <li key={item.url}>
             <NavLink
@@ -53,15 +44,6 @@ export const Navigation = () => {
           </li>
         ))}
       </ul>
-
-      <Button
-        onClick={signOut}
-        variant="ghost"
-        className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground mt-4"
-      >
-        <LogOut className="h-5 w-5" />
-        <span>Sair</span>
-      </Button>
     </nav>
   );
 };

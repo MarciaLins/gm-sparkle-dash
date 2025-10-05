@@ -13,13 +13,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { z } from "zod";
-
-const transacaoSchema = z.object({
-  descricao: z.string().trim().min(1, "Descrição é obrigatória").max(200),
-  valor: z.number().positive("Valor deve ser positivo"),
-  tipo: z.enum(['receita', 'despesa'], { errorMap: () => ({ message: "Tipo deve ser receita ou despesa" }) }),
-});
 
 const Financeiro = () => {
   const [open, setOpen] = useState(false);
@@ -72,28 +65,18 @@ const Financeiro = () => {
   });
 
   const handleSave = () => {
-    const valorNumerico = parseFloat(valor.replace(/[^\d,]/g, '').replace(',', '.'));
-    
-    const validation = transacaoSchema.safeParse({
-      descricao,
-      valor: valorNumerico,
-      tipo: tipo as 'receita' | 'despesa',
-    });
-
-    if (!validation.success) {
-      toast({ 
-        title: "Erro de validação", 
-        description: validation.error.errors[0].message,
-        variant: "destructive" 
-      });
+    if (!descricao || !valor || !tipo) {
+      toast({ title: "Preencha todos os campos", variant: "destructive" });
       return;
     }
+
+    const valorNumerico = parseFloat(valor.replace(/[^\d,]/g, '').replace(',', '.'));
     
     addTransacao.mutate({
-      descricao: validation.data.descricao,
-      valor: validation.data.valor,
-      tipo: validation.data.tipo,
-      categoria: validation.data.tipo === 'receita' ? 'Receita' : 'Despesa'
+      descricao,
+      valor: valorNumerico,
+      tipo,
+      categoria: tipo === 'receita' ? 'Receita' : 'Despesa'
     });
   };
 
