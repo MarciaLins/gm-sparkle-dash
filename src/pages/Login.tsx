@@ -73,9 +73,6 @@ const Login = () => {
               {loading ? "Entrando..." : "Acessar Sistema"}
             </Button>
           </form>
-          <p className="text-xs text-muted-foreground mt-4 text-center">
-            ⚠️ Sistema sem autenticação - uso interno apenas
-          </p>
         </CardContent>
       </Card>
     </div>
