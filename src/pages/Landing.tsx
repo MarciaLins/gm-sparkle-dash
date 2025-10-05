@@ -1,14 +1,11 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { MessageCircle, Send, Quote } from "lucide-react";
-
-// URLs de Imagens de placeholder para evitar erros de compilação
-const logoFilipeLima = "https://placehold.co/100x100/1A1B1E/FCB900?text=FL";
-const filipeLimaPhoto = "https://placehold.co/450x600/1A1B1E/FCB900?text=Filipe+Lima";
+import filipeLimaImage from "@/assets/filipe-lima-photo.jpg";
 
 interface Message {
   id: number;
@@ -28,6 +25,12 @@ export default function Landing() {
     },
   ]);
   const [input, setInput] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll para o final quando novas mensagens são adicionadas
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   // A URL do Webhook do Make.com (já configurada)
   const MAKE_WEBHOOK_URL = "https://hook.us2.make.com/ngw41roxe6sx7txxqmfn8mae305618tt";
@@ -136,9 +139,9 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto flex items-center gap-6">
           <div className="w-24 h-24 rounded-lg overflow-hidden">
             <img 
-              src={logoFilipeLima} 
+              src={filipeLimaImage} 
               alt="Logótipo Filipe Lima" 
-              className="w-full h-full object-contain"
+              className="w-full h-full object-cover"
             />
           </div>
           <div>
@@ -158,7 +161,7 @@ export default function Landing() {
           <div className="order-2 md:order-1 relative">
             <div className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none">
               <img 
-                src={logoFilipeLima} 
+                src={filipeLimaImage} 
                 alt="Marca d'água" 
                 className="w-full h-auto object-contain"
               />
@@ -182,7 +185,7 @@ export default function Landing() {
           <div className="order-1 md:order-2">
             <div className="relative aspect-[3/4] rounded-lg overflow-hidden shadow-[0_0_40px_rgba(252,211,77,0.2)]">
               <img
-                src={filipeLimaPhoto}
+                src={filipeLimaImage}
                 alt="Filipe Lima Violinista"
                 className="w-full h-full object-cover"
               />
@@ -281,6 +284,7 @@ export default function Landing() {
                   </div>
                 </div>
               ))}
+              <div ref={messagesEndRef} />
             </div>
           </ScrollArea>
 
