@@ -44,16 +44,73 @@ const feriadosEstaduaisPE2025 = [
   { date: new Date(2025, 5, 24), name: "São João (Pernambuco)", type: "Estadual PE" },
 ];
 
-// Feriados Municipais de Recife 2025
-const feriadosMunicipaisRecife2025 = [
-  { date: new Date(2025, 2, 12), name: "Aniversário de Recife", type: "Municipal Recife" },
-  { date: new Date(2025, 6, 16), name: "Nossa Senhora do Carmo", type: "Municipal Recife" },
+// Feriados Municipais de Pernambuco 2025 (principais cidades)
+const feriadosMunicipaisPE2025 = [
+  // Recife
+  { date: new Date(2025, 2, 12), name: "Aniversário de Recife", type: "Municipal - Recife" },
+  { date: new Date(2025, 6, 16), name: "Nossa Senhora do Carmo", type: "Municipal - Recife" },
+  
+  // Olinda
+  { date: new Date(2025, 2, 12), name: "Aniversário de Olinda", type: "Municipal - Olinda" },
+  { date: new Date(2025, 10, 16), name: "São Bento", type: "Municipal - Olinda" },
+  
+  // Jaboatão dos Guararapes
+  { date: new Date(2025, 7, 3), name: "Aniversário de Jaboatão", type: "Municipal - Jaboatão" },
+  
+  // Caruaru
+  { date: new Date(2025, 4, 18), name: "Aniversário de Caruaru", type: "Municipal - Caruaru" },
+  { date: new Date(2025, 5, 24), name: "São João (Caruaru)", type: "Municipal - Caruaru" },
+  
+  // Petrolina
+  { date: new Date(2025, 6, 14), name: "Aniversário de Petrolina", type: "Municipal - Petrolina" },
+  
+  // Paulista
+  { date: new Date(2025, 6, 28), name: "Aniversário de Paulista", type: "Municipal - Paulista" },
+  
+  // Cabo de Santo Agostinho
+  { date: new Date(2025, 5, 29), name: "São Pedro", type: "Municipal - Cabo" },
+  
+  // Camaragibe
+  { date: new Date(2025, 4, 14), name: "Aniversário de Camaragibe", type: "Municipal - Camaragibe" },
+  
+  // Garanhuns
+  { date: new Date(2025, 8, 9), name: "Aniversário de Garanhuns", type: "Municipal - Garanhuns" },
+  
+  // Vitória de Santo Antão
+  { date: new Date(2025, 5, 13), name: "Santo Antônio", type: "Municipal - Vitória SA" },
+  
+  // Igarassu
+  { date: new Date(2025, 8, 27), name: "Aniversário de Igarassu", type: "Municipal - Igarassu" },
+  
+  // São Lourenço da Mata
+  { date: new Date(2025, 7, 10), name: "São Lourenço", type: "Municipal - São Lourenço" },
+  
+  // Abreu e Lima
+  { date: new Date(2025, 5, 27), name: "Aniversário de Abreu e Lima", type: "Municipal - Abreu e Lima" },
+  
+  // Santa Cruz do Capibaribe
+  { date: new Date(2025, 5, 13), name: "Santo Antônio", type: "Municipal - Santa Cruz" },
+  
+  // Serra Talhada
+  { date: new Date(2025, 7, 15), name: "Aniversário de Serra Talhada", type: "Municipal - Serra Talhada" },
+  
+  // Gravatá
+  { date: new Date(2025, 9, 11), name: "Aniversário de Gravatá", type: "Municipal - Gravatá" },
+  
+  // Escada
+  { date: new Date(2025, 7, 24), name: "Aniversário de Escada", type: "Municipal - Escada" },
+  
+  // Belo Jardim
+  { date: new Date(2025, 4, 9), name: "Aniversário de Belo Jardim", type: "Municipal - Belo Jardim" },
+  
+  // Arcoverde
+  { date: new Date(2025, 4, 13), name: "Aniversário de Arcoverde", type: "Municipal - Arcoverde" },
 ];
 
 const todosFeriados2025 = [
   ...feriadosNacionais2025,
   ...feriadosEstaduaisPE2025,
-  ...feriadosMunicipaisRecife2025,
+  ...feriadosMunicipaisPE2025,
 ];
 
 const Agenda = () => {
@@ -76,15 +133,20 @@ const Agenda = () => {
 
   // Combinar eventos do banco com feriados
   const todosEventos = useMemo<EventoAgenda[]>(() => {
-    const eventos: EventoAgenda[] = eventosDB?.map(e => ({
-      id: e.id,
-      title: e.nome_evento || 'Evento',
-      date: e.data_inicio ? format(new Date(e.data_inicio), 'yyyy-MM-dd') : '',
-      time: e.data_inicio ? format(new Date(e.data_inicio), 'HH:mm') : '',
-      location: e.local_evento || '',
-      type: 'evento' as const,
-      status: e.status_evento || undefined
-    })) || [];
+    const eventos: EventoAgenda[] = eventosDB?.map(e => {
+      // Garantir que a data seja interpretada corretamente no fuso horário local
+      const dataEvento = e.data_inicio ? new Date(e.data_inicio) : new Date();
+      
+      return {
+        id: e.id,
+        title: e.nome_evento || 'Evento',
+        date: format(dataEvento, 'yyyy-MM-dd'),
+        time: format(dataEvento, 'HH:mm'),
+        location: e.local_evento || '',
+        type: 'evento' as const,
+        status: e.status_evento || undefined
+      };
+    }) || [];
 
     const feriados: EventoAgenda[] = todosFeriados2025.map((f, idx) => ({
       id: `feriado-${idx}`,
