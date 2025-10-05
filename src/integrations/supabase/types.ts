@@ -386,6 +386,30 @@ export type Database = {
         }
         Relationships: []
       }
+      sofia_messages: {
+        Row: {
+          conversation_id: string
+          created_at: string
+          id: string
+          sofia_response: string | null
+          user_message: string
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string
+          id?: string
+          sofia_response?: string | null
+          user_message: string
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          sofia_response?: string | null
+          user_message?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

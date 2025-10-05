@@ -1,1 +1,4 @@
 project_id = "vtjoeazrgdqvubytwogh"
+
+[functions.sofia-response]
+verify_jwt = false

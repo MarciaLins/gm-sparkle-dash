@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -28,9 +29,62 @@ export default function Landing() {
     },
   ]);
   const [input, setInput] = useState("");
+  const conversationIdRef = useRef<string | null>(null);
 
   // URL do webhook do Make para Sofia vendedora
   const MAKE_WEBHOOK_URL = "https://hook.us2.make.com/ngw41roxe6sx7txxqmfn8mae305618tt";
+
+  // Gerar conversationId quando o chat abre
+  useEffect(() => {
+    if (chatOpen && !conversationIdRef.current) {
+      conversationIdRef.current = crypto.randomUUID();
+      console.log('Nova conversa iniciada:', conversationIdRef.current);
+    }
+  }, [chatOpen]);
+
+  // Subscrever ao Realtime para receber respostas da Sofia
+  useEffect(() => {
+    if (!conversationIdRef.current) return;
+
+    console.log('Subscrevendo ao Realtime para conversation:', conversationIdRef.current);
+
+    const channel = supabase
+      .channel('sofia-messages')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'sofia_messages',
+          filter: `conversation_id=eq.${conversationIdRef.current}`
+        },
+        (payload) => {
+          console.log('Nova mensagem recebida via Realtime:', payload);
+          
+          const newMessage = payload.new as any;
+          
+          // Remover mensagem de "a processar" e adicionar resposta real
+          setMessages(prev => {
+            const filtered = prev.filter(m => 
+              !(m.sender === 'sofia' && m.text.includes('a processar'))
+            );
+            
+            return [...filtered, {
+              id: parseInt(newMessage.id),
+              text: newMessage.sofia_response,
+              sender: 'sofia' as const,
+              timestamp: new Date(newMessage.created_at)
+            }];
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('Unsubscribing from Realtime');
+      supabase.removeChannel(channel);
+    };
+  }, [conversationIdRef.current]);
 
   const handleSend = async () => {
     if (input.trim()) {
@@ -63,7 +117,10 @@ export default function Landing() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ message: currentInput }),
+          body: JSON.stringify({ 
+            message: currentInput,
+            conversationId: conversationIdRef.current
+          }),
           signal: controller.signal,
         });
 
@@ -73,39 +130,20 @@ export default function Landing() {
           throw new Error(`Erro de HTTP! Status: ${response.status}`);
         }
 
-        // O Make pode retornar texto simples ou JSON
-        const responseText = await response.text();
-        console.log('Resposta do Make (texto):', responseText);
+        // Mostrar apenas mensagem de "a processar"
+        // A resposta real virá via Realtime
+        console.log('Mensagem enviada para Make.com com conversationId:', conversationIdRef.current);
         
-        let sofiaMessageText: string;
-        
-        // Tenta fazer parse como JSON
-        try {
-          const data = JSON.parse(responseText);
-          if (data.reply) {
-            sofiaMessageText = data.reply;
-          } else {
-            sofiaMessageText = "Recebi a sua mensagem! Estou a processar, pode demorar alguns segundos...";
-          }
-        } catch {
-          // Se não for JSON, verifica se é "Accepted"
-          if (responseText.trim() === 'Accepted') {
-            sofiaMessageText = "Recebi a sua mensagem! Estou a processar, pode demorar alguns segundos...";
-          } else {
-            sofiaMessageText = responseText || "Desculpe, recebi uma resposta inesperada.";
-          }
-        }
-        
-        const sofiaResponse: Message = {
+        const processingMessage: Message = {
           id: messages.length + 3,
-          text: sofiaMessageText,
+          text: "Recebi a sua mensagem! Estou a processar, pode demorar alguns segundos...",
           sender: "sofia",
           timestamp: new Date(),
         };
 
         setMessages((prev) => [
           ...prev.slice(0, -1),
-          sofiaResponse,
+          processingMessage,
         ]);
 
       } catch (error) {
