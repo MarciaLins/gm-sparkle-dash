@@ -5,9 +5,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { MessageCircle, Send, Quote } from "lucide-react";
+import logoFilipeLima from "@/assets/filipe-lima-logo.jpg";
 
-// URLs de Imagens de placeholder para evitar erros de compilação
-const logoFilipeLima = "https://placehold.co/100x100/1A1B1E/FCB900?text=FL";
+// URL de Imagem de placeholder para a foto
 const filipeLimaPhoto = "https://placehold.co/450x600/1A1B1E/FCB900?text=Filipe+Lima";
 
 interface Message {
