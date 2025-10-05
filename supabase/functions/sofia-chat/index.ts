@@ -363,11 +363,11 @@ serve(async (req) => {
     // Landing page: sempre notifica (vendas)
     // Dashboard: apenas quando há ação
     if (context === "landing_page" || hasAction) {
-      console.log('Notificando Make.com...');
       const webhookUrl = context === "landing_page" ? MAKE_WEBHOOK_LANDING : MAKE_WEBHOOK_DASHBOARD;
+      console.log('Notificando Make.com...', { webhookUrl, context });
       
       try {
-        await fetch(webhookUrl, {
+        const webhookResponse = await fetch(webhookUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -379,6 +379,19 @@ serve(async (req) => {
             context: context
           })
         });
+        
+        console.log('Make.com webhook response:', {
+          status: webhookResponse.status,
+          ok: webhookResponse.ok,
+          statusText: webhookResponse.statusText
+        });
+        
+        if (!webhookResponse.ok) {
+          const errorText = await webhookResponse.text();
+          console.error('Make.com webhook error:', errorText);
+        } else {
+          console.log('Make.com notificado com sucesso!');
+        }
       } catch (makeError) {
         console.error('Make.com notification failed:', makeError);
       }
