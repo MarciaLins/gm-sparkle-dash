@@ -1,9 +1,10 @@
-import { Calendar, Users, DollarSign, Briefcase, Settings, LayoutDashboard, Package } from "lucide-react";
+import { Calendar, Users, DollarSign, Briefcase, Settings, LayoutDashboard, Package, FileText } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
+  { title: "Propostas", url: "/propostas", icon: FileText },
   { title: "Minha Agenda", url: "/agenda", icon: Calendar },
   { title: "Meus Clientes", url: "/clientes", icon: Users },
   { title: "Minha Equipe", url: "/equipe", icon: Briefcase },
