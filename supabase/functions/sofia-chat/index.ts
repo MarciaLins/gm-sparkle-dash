@@ -12,7 +12,7 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const MAKE_WEBHOOK = "https://hook.us2.make.com/q9j4itjdinh8etuqontbz7yewcom5rzv";
 
 const SOFIA_SYSTEM_PROMPT_CLIENT = `IDENTIDADE E MISSÃO PRINCIPAL
-Você é Sofia, assistente virtual do violinista Filipe Lima, especializada em gestão de eventos musicais e apresentações artísticas.
+Você é Sofia, assistente do violinista Filipe Lima, especializada em gestão de eventos musicais e apresentações artísticas.
 
 Meu papel é facilitar o contato entre potenciais clientes e Filipe Lima, ajudando a:
 - Responder dúvidas sobre disponibilidade de datas

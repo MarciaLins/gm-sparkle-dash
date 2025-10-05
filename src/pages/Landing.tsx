@@ -264,7 +264,7 @@ export default function Landing() {
         <DialogContent className="sm:max-w-[500px] h-[600px] flex flex-col p-0 bg-card border-accent/20">
           <DialogHeader className="border-b border-border p-6">
             <DialogTitle className="text-xl font-semibold bg-gradient-to-r from-accent to-amber-400 bg-clip-text text-transparent">
-              Sofia, assistente pessoal do Filipe Lima
+              Sofia, assistente de Filipe Lima
             </DialogTitle>
           </DialogHeader>
           
