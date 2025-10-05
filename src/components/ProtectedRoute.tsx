@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 
 interface ProtectedRouteProps {
@@ -18,28 +17,21 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
   const checkAuth = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      // ⚠️ INSECURE: Verificação apenas do localStorage (não seguro!)
+      const userEmail = localStorage.getItem('user_email');
       
-      if (!session) {
+      if (!userEmail) {
         navigate("/login");
         return;
       }
 
-      const { data, error } = await supabase
-        .rpc('has_role', { 
-          _user_id: session.user.id, 
-          _role: 'admin' 
-        });
-
-      if (error) throw error;
-
-      if (!data) {
-        await supabase.auth.signOut();
+      // Validação básica apenas para filipecc2002@gmail.com
+      if (userEmail === 'filipecc2002@gmail.com') {
+        setIsAuthorized(true);
+      } else {
+        localStorage.removeItem('user_email');
         navigate("/login");
-        return;
       }
-
-      setIsAuthorized(true);
     } catch (error) {
       console.error("Erro ao verificar autorização:", error);
       navigate("/login");

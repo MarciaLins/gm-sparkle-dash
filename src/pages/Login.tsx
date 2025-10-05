@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +8,6 @@ import { useToast } from "@/hooks/use-toast";
 const Login = () => {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [emailSent, setEmailSent] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -18,23 +16,23 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-        },
-      });
+      // ⚠️ INSECURE: Validação apenas do email sem autenticação real
+      if (!email || !email.includes('@')) {
+        throw new Error("Email inválido");
+      }
 
-      if (error) throw error;
-
-      setEmailSent(true);
+      // Armazenar email no localStorage (não seguro!)
+      localStorage.setItem('user_email', email);
+      
       toast({
-        title: "Email enviado!",
-        description: "Verifique sua caixa de entrada para fazer login.",
+        title: "Acesso concedido",
+        description: "Redirecionando...",
       });
+
+      navigate("/");
     } catch (error: any) {
       toast({
-        title: "Erro ao enviar email",
+        title: "Erro ao fazer login",
         description: error.message,
         variant: "destructive",
       });
@@ -57,42 +55,27 @@ const Login = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {emailSent ? (
-            <div className="text-center space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Um link de acesso foi enviado para <strong>{email}</strong>
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Verifique sua caixa de entrada e clique no link para fazer login.
-              </p>
-              <Button 
-                variant="outline" 
-                onClick={() => setEmailSent(false)}
-                className="w-full"
-              >
-                Enviar novamente
-              </Button>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="email" className="text-sm font-medium">
+                Email
+              </label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="seu@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
             </div>
-          ) : (
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
-                <label htmlFor="email" className="text-sm font-medium">
-                  Email
-                </label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="seu@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Enviando..." : "Enviar Link de Acesso"}
-              </Button>
-            </form>
-          )}
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Entrando..." : "Acessar Sistema"}
+            </Button>
+          </form>
+          <p className="text-xs text-muted-foreground mt-4 text-center">
+            ⚠️ Sistema sem autenticação - uso interno apenas
+          </p>
         </CardContent>
       </Card>
     </div>
