@@ -74,7 +74,16 @@ export default function Landing() {
         }
 
         const data = await response.json();
-        const sofiaMessageText = data.reply || "Recebi uma resposta, mas o formato é inválido.";
+        
+        // Verifica se o Make retornou apenas "Accepted" ou a resposta completa
+        let sofiaMessageText: string;
+        if (typeof data === 'string' && data === 'Accepted') {
+          sofiaMessageText = "Recebi a sua mensagem! Estou a processar, pode demorar alguns segundos...";
+        } else if (data.reply) {
+          sofiaMessageText = data.reply;
+        } else {
+          sofiaMessageText = "Recebi uma resposta, mas o formato é inválido.";
+        }
         
         const sofiaResponse: Message = {
           id: messages.length + 3,
