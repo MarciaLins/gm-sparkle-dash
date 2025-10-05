@@ -7,6 +7,8 @@ const corsHeaders = {
 };
 
 const GEMINI_API_KEY = Deno.env.get('GOOGLE_GEMINI_API_KEY');
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const MAKE_WEBHOOK = "https://hook.us2.make.com/q9j4itjdinh8etuqontbz7yewcom5rzv";
 
 const SOFIA_SYSTEM_PROMPT_CLIENT = `IDENTIDADE E MISSÃO PRINCIPAL
@@ -65,24 +67,26 @@ Seu papel é ajudar Filipe no dia a dia da empresa:
 - Dar insights e sugestões estratégicas
 - Executar tarefas administrativas
 
+FERRAMENTAS DISPONÍVEIS
+Você tem acesso direto ao banco de dados e pode:
+- CONSULTAR dados de eventos, clientes, finanças, propostas, equipe e serviços
+- EXECUTAR AÇÕES como criar eventos, atualizar propostas, registrar despesas, gerenciar clientes e alocar equipe
+
+Use as ferramentas query_database e execute_action quando Filipe pedir informações ou ações.
+
 COMO ATENDER O FILIPE
 - Seja direta, eficiente e proativa
 - Fale de forma natural, como uma assistente próxima
 - Forneça informações objetivas quando solicitado
 - Ofereça sugestões quando pertinente
-- Execute ações quando solicitado (como bloquear datas, adicionar despesas, etc)
-- Mantenha Filipe sempre informado sobre o status dos eventos e negócios
+- Execute ações quando solicitado
+- Sempre confirme ações executadas de forma clara
 
-AÇÕES QUE VOCÊ PODE EXECUTAR
-Quando Filipe solicitar, você pode:
-- Bloquear/desbloquear datas na agenda
-- Adicionar despesas de eventos
-- Registrar informações de clientes
-- Marcar reuniões
-- Enviar lembretes
-- Gerar relatórios financeiros
-
-Sempre que executar uma ação, confirme ao Filipe de forma clara e objetiva.
+EXEMPLOS DE USO:
+- "Quantos eventos tenho esse mês?" → Use query_database na tabela eventos
+- "Bloqueia dia 15 de novembro" → Use execute_action para criar evento de bloqueio
+- "Quanto gastei em hotel esse ano?" → Use query_database em financeiro com filtros
+- "Registra despesa de R$ 500 em hotel" → Use execute_action create_expense
 
 Você é a Sofia - eficiente, confiável e sempre focada em manter o negócio do Filipe funcionando perfeitamente.`;
 
@@ -99,6 +103,9 @@ serve(async (req) => {
     if (!GEMINI_API_KEY) {
       throw new Error('GOOGLE_GEMINI_API_KEY não configurada');
     }
+
+    // Initialize Supabase client
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     // Obter data atual formatada em português
     const now = new Date();
@@ -122,7 +129,16 @@ serve(async (req) => {
     
     const systemPrompt = `${basePrompt}\n\nDATA E HORA ATUAL: Hoje é ${dataAtual}, são ${horaAtual} (horário de Recife/Pernambuco).`;
 
-    // Definir tools para Google Maps
+    // Retrieve conversation history (last 15 messages)
+    const conversationId = `${user_email}_${new Date(timestamp).toISOString().split('T')[0]}`;
+    const { data: messageHistory } = await supabase
+      .from('sofia_messages')
+      .select('user_message, sofia_response')
+      .eq('conversation_id', conversationId)
+      .order('created_at', { ascending: false })
+      .limit(15);
+
+    // Definir tools expandidos
     const tools = [
       {
         functionDeclarations: [
@@ -143,22 +159,79 @@ serve(async (req) => {
               },
               required: ["location"]
             }
+          },
+          {
+            name: "query_database",
+            description: "Consulta dados do banco. Use para buscar informações sobre eventos, clientes, finanças, propostas, equipe ou serviços.",
+            parameters: {
+              type: "OBJECT",
+              properties: {
+                table: {
+                  type: "STRING",
+                  enum: ["eventos", "clientes", "financeiro", "propostas", "equipe", "servicos", "pacotes_servicos"],
+                  description: "Tabela a consultar"
+                },
+                filters: {
+                  type: "STRING",
+                  description: "Filtros JSON opcional (ex: {\"status\": \"Confirmado\"})"
+                },
+                limit: {
+                  type: "NUMBER",
+                  description: "Máximo de registros (padrão: 10)"
+                }
+              },
+              required: ["table"]
+            }
+          },
+          {
+            name: "execute_action",
+            description: "Executa uma ação no banco. Use para criar eventos, atualizar propostas, registrar despesas, gerenciar clientes ou alocar equipe.",
+            parameters: {
+              type: "OBJECT",
+              properties: {
+                action: {
+                  type: "STRING",
+                  enum: ["create_event", "update_event", "update_proposal_status", "create_expense", "create_client", "update_client", "allocate_team"],
+                  description: "Ação a executar"
+                },
+                data: {
+                  type: "STRING",
+                  description: "Dados JSON necessários para a ação"
+                }
+              },
+              required: ["action", "data"]
+            }
           }
         ]
       }
     ];
 
-    // Construir payload para Gemini
+    // Construir payload para Gemini com histórico
     const geminiContents: any[] = [];
+    
+    // Add previous messages in chronological order
+    if (messageHistory && messageHistory.length > 0) {
+      messageHistory.reverse().forEach(msg => {
+        geminiContents.push({
+          role: "user",
+          parts: [{ text: msg.user_message }]
+        });
+        if (msg.sofia_response) {
+          geminiContents.push({
+            role: "model",
+            parts: [{ text: msg.sofia_response }]
+          });
+        }
+      });
+    }
 
-    // Adicionar mídia baseado no tipo
+    // Adicionar mensagem atual baseado no tipo
     if (media_type === "text") {
       geminiContents.push({
         role: "user",
         parts: [{ text: message }]
       });
     } else if (media_type === "audio" && media_data) {
-      // Extrair apenas o base64 (remover prefixo data:audio/webm;base64,)
       const base64Data = media_data.includes(',') ? media_data.split(',')[1] : media_data;
       geminiContents.push({
         role: "user",
@@ -173,7 +246,6 @@ serve(async (req) => {
         ]
       });
     } else if (media_type === "image" && media_data) {
-      // Extrair apenas o base64 (remover prefixo data:image/...;base64,)
       const base64Data = media_data.includes(',') ? media_data.split(',')[1] : media_data;
       const mimeType = media_data.match(/data:(image\/[a-z]+);/)?.[1] || "image/jpeg";
       geminiContents.push({
@@ -227,19 +299,50 @@ serve(async (req) => {
     const geminiData = await geminiResponse.json();
     console.log('Gemini response received');
     
-    // Verificar se há tool call (mapa)
+    // Processar resposta e function calls
     const parts = geminiData.candidates?.[0]?.content?.parts || [];
-    const functionCall = parts.find((part: any) => part.functionCall);
-    
-    let sofiaReply = parts.find((part: any) => part.text)?.text || "Desculpe, não consegui processar sua mensagem.";
+    let sofiaReply = "";
     let mapData = null;
     
-    if (functionCall && functionCall.functionCall.name === "show_map") {
-      mapData = {
-        location: functionCall.functionCall.args.location,
-        description: functionCall.functionCall.args.description || ""
-      };
-      console.log('Map data:', mapData);
+    for (const part of parts) {
+      if (part.text) {
+        sofiaReply += part.text;
+      }
+      
+      if (part.functionCall) {
+        const functionCall = part.functionCall;
+        console.log('Function call detected:', functionCall.name, functionCall.args);
+        
+        if (functionCall.name === "show_map") {
+          mapData = {
+            location: functionCall.args.location,
+            description: functionCall.args.description || ""
+          };
+        } else if (functionCall.name === "query_database") {
+          const filters = functionCall.args.filters ? JSON.parse(functionCall.args.filters) : {};
+          const result = await executeQuery(supabase, {
+            table: functionCall.args.table,
+            filters: filters,
+            limit: functionCall.args.limit || 10
+          });
+          sofiaReply += `\n\n📊 Dados encontrados: ${result.count} registro(s)\n${JSON.stringify(result.data, null, 2)}`;
+        } else if (functionCall.name === "execute_action") {
+          const data = JSON.parse(functionCall.args.data);
+          const result = await executeAction(supabase, {
+            action: functionCall.args.action,
+            data: data
+          });
+          if (result.success) {
+            sofiaReply += `\n\n✅ ${result.message}`;
+          } else {
+            sofiaReply += `\n\n❌ Erro: ${result.error}`;
+          }
+        }
+      }
+    }
+    
+    if (!sofiaReply) {
+      sofiaReply = "Desculpe, não consegui processar sua mensagem.";
     }
 
     // Detectar ações que precisam notificar Make.com
@@ -255,7 +358,6 @@ serve(async (req) => {
       sofiaReply.toLowerCase().includes(keyword.toLowerCase())
     );
 
-    // Notificar Make.com apenas se houver ação
     if (hasAction) {
       console.log('Ação detectada, notificando Make.com...');
       try {
@@ -273,19 +375,11 @@ serve(async (req) => {
         });
       } catch (makeError) {
         console.error('Make.com notification failed:', makeError);
-        // Não bloquear resposta se Make.com falhar
       }
     }
 
     // Salvar no banco de dados
     try {
-      const supabase = createClient(
-        Deno.env.get('SUPABASE_URL')!,
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-      );
-
-      const conversationId = `${user_email}_${new Date().toISOString().split('T')[0]}`;
-      
       await supabase.from('sofia_messages').insert({
         conversation_id: conversationId,
         user_message: message,
@@ -294,7 +388,6 @@ serve(async (req) => {
       });
     } catch (dbError) {
       console.error('Database save failed:', dbError);
-      // Não bloquear resposta se banco falhar
     }
 
     console.log('Resposta enviada com sucesso');
@@ -341,3 +434,145 @@ serve(async (req) => {
     );
   }
 });
+
+// Helper function to execute database queries
+async function executeQuery(supabase: any, args: any) {
+  const { table, filters = {}, limit = 10 } = args;
+  
+  try {
+    let query = supabase.from(table).select('*');
+    
+    // Apply filters
+    Object.entries(filters).forEach(([key, value]) => {
+      if (typeof value === 'string' && value.startsWith('>')) {
+        query = query.gt(key, value.substring(1));
+      } else if (typeof value === 'string' && value.startsWith('<')) {
+        query = query.lt(key, value.substring(1));
+      } else {
+        query = query.eq(key, value);
+      }
+    });
+    
+    const { data, error } = await query.limit(limit);
+    
+    if (error) throw error;
+    
+    return {
+      success: true,
+      data: data,
+      count: data.length
+    };
+  } catch (error: any) {
+    console.error('Query error:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+}
+
+// Helper function to execute database actions
+async function executeAction(supabase: any, args: any) {
+  const { action, data } = args;
+  
+  try {
+    switch (action) {
+      case 'create_event':
+        const { data: newEvent, error: eventError } = await supabase
+          .from('eventos')
+          .insert([{
+            nome_evento: data.nome_evento,
+            tipo_evento: data.tipo_evento,
+            local_evento: data.local_evento,
+            data_inicio: data.data_inicio,
+            data_fim: data.data_fim,
+            id_cliente: data.id_cliente,
+            status_evento: data.status_evento || 'Pendente'
+          }])
+          .select();
+        
+        if (eventError) throw eventError;
+        return { success: true, message: 'Evento criado com sucesso', data: newEvent };
+      
+      case 'update_event':
+        const { data: updatedEvent, error: updateError } = await supabase
+          .from('eventos')
+          .update(data.updates)
+          .eq('id', data.id)
+          .select();
+        
+        if (updateError) throw updateError;
+        return { success: true, message: 'Evento atualizado', data: updatedEvent };
+      
+      case 'update_proposal_status':
+        const { error: proposalError } = await supabase
+          .from('propostas')
+          .update({ status: data.status })
+          .eq('id', data.id);
+        
+        if (proposalError) throw proposalError;
+        return { success: true, message: `Proposta marcada como ${data.status}` };
+      
+      case 'create_expense':
+        const { data: newExpense, error: expenseError } = await supabase
+          .from('financeiro')
+          .insert([{
+            tipo: 'Saída',
+            categoria: data.categoria,
+            descricao: data.descricao,
+            valor: data.valor,
+            id_evento: data.id_evento,
+            status: data.status || 'Pendente'
+          }])
+          .select();
+        
+        if (expenseError) throw expenseError;
+        return { success: true, message: 'Despesa registrada', data: newExpense };
+      
+      case 'create_client':
+        const { data: newClient, error: clientError } = await supabase
+          .from('clientes')
+          .insert([{
+            nome_cliente: data.nome_cliente,
+            email_contato: data.email_contato,
+            telefone_contato: data.telefone_contato,
+            observacoes_ia: data.observacoes_ia
+          }])
+          .select();
+        
+        if (clientError) throw clientError;
+        return { success: true, message: 'Cliente criado', data: newClient };
+      
+      case 'update_client':
+        const { error: updateClientError } = await supabase
+          .from('clientes')
+          .update(data.updates)
+          .eq('id', data.id);
+        
+        if (updateClientError) throw updateClientError;
+        return { success: true, message: 'Cliente atualizado' };
+      
+      case 'allocate_team':
+        const { data: allocation, error: allocError } = await supabase
+          .from('alocacao_equipe')
+          .insert([{
+            id_evento: data.id_evento,
+            id_membro_equipe: data.id_membro_equipe,
+            valor_acordado: data.valor_acordado
+          }])
+          .select();
+        
+        if (allocError) throw allocError;
+        return { success: true, message: 'Equipe alocada ao evento', data: allocation };
+      
+      default:
+        return { success: false, error: 'Ação não reconhecida' };
+    }
+  } catch (error: any) {
+    console.error('Action error:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+}
