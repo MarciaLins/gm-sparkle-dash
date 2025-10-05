@@ -6,6 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { MessageCircle, Send, Quote } from "lucide-react";
 import filipeLimaImage from "@/assets/filipe-lima-photo.jpg";
+import filipeLimaMain from "@/assets/filipe-lima-main.jpg";
 
 interface Message {
   id: number;
@@ -185,7 +186,7 @@ export default function Landing() {
           <div className="order-1 md:order-2">
             <div className="relative aspect-[3/4] rounded-lg overflow-hidden shadow-[0_0_40px_rgba(252,211,77,0.2)]">
               <img
-                src={filipeLimaImage}
+                src={filipeLimaMain}
                 alt="Filipe Lima Violinista"
                 className="w-full h-full object-cover"
               />
