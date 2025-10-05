@@ -33,8 +33,8 @@ export default function Landing() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // A URL do Webhook do Make.com (já configurada)
-  const MAKE_WEBHOOK_URL = "https://hook.us2.make.com/ngw41roxe6sx7txxqmfn8mae305618tt";
+  // Nova URL da Sofia com Gemini AI
+  const SOFIA_CHAT_URL = "https://vtjoeazrgdqvubytwogh.supabase.co/functions/v1/sofia-chat";
 
   const handleSend = async () => {
     if (input.trim()) {
@@ -64,38 +64,38 @@ export default function Landing() {
       const timeoutId = setTimeout(() => controller.abort(), 25000); // Espera até 25 segundos
 
       try {
-        const response = await fetch(MAKE_WEBHOOK_URL, {
+        const response = await fetch(SOFIA_CHAT_URL, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "Authorization": `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0am9lYXpyZ2RxdnVieXR3b2doIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzMzQ5NzksImV4cCI6MjA3NDkxMDk3OX0.lMVpDTLNsk_nPCn3QCiGJ0o7TbY-hJEiQWtjJcxeV6k`
           },
-          body: JSON.stringify({ message: currentInput }),
+          body: JSON.stringify({
+            message: currentInput,
+            user_email: "cliente@landing.com",
+            timestamp: new Date().toISOString(),
+            context: "landing_page",
+            media_type: "text"
+          }),
           signal: controller.signal,
         });
 
-        clearTimeout(timeoutId); // Limpa o timeout se a resposta chegar a tempo
+        clearTimeout(timeoutId);
+
+        if (response.status === 429) {
+          throw new Error("Sofia está ocupada no momento. Tente novamente em alguns segundos.");
+        }
+        
+        if (response.status === 402) {
+          throw new Error("Limite de uso atingido. Entre em contato com o suporte.");
+        }
 
         if (!response.ok) {
-          throw new Error(`Erro de HTTP! Status: ${response.status}`);
+          throw new Error(`Erro no servidor. Status: ${response.status}`);
         }
 
-        // Usa text() primeiro para lidar com JSON mal formatado
-        const textResponse = await response.text();
-        let sofiaMessageText = "Recebi uma resposta, mas o formato é inválido.";
-        
-        try {
-          const data = JSON.parse(textResponse);
-          sofiaMessageText = data.reply || sofiaMessageText;
-        } catch (jsonError) {
-          // Se o JSON estiver mal formatado, tenta extrair a mensagem diretamente
-          const replyMatch = textResponse.match(/"reply"\s*:\s*"([^"]*)"/);
-          if (replyMatch) {
-            sofiaMessageText = replyMatch[1]
-              .replace(/\\n/g, '\n')
-              .replace(/\\t/g, '\t')
-              .replace(/\\"/g, '"');
-          }
-        }
+        const data = await response.json();
+        const sofiaMessageText = data.reply || "Desculpe, não consegui processar sua mensagem.";
         
         const sofiaResponse: Message = {
           id: messages.length + 3,
@@ -104,19 +104,19 @@ export default function Landing() {
           timestamp: new Date(),
         };
 
-        // Substitui a mensagem de "a pensar" pela resposta final
         setMessages((prev) => [
           ...prev.slice(0, -1),
           sofiaResponse,
         ]);
 
-      } catch (error) {
+      } catch (error: any) {
         clearTimeout(timeoutId);
         let errorMessage = "Desculpe, estou com um problema técnico. Tente novamente mais tarde.";
         if (error.name === 'AbortError') {
           errorMessage = "Desculpe, demorei muito para pensar. Pode tentar reformular a sua pergunta?";
+        } else if (error.message) {
+          errorMessage = error.message;
         }
-        console.error("Erro:", error);
         
         const errorResponse: Message = {
           id: messages.length + 3,
@@ -124,8 +124,8 @@ export default function Landing() {
           sender: "sofia",
           timestamp: new Date(),
         };
-        // Substitui a mensagem de "a pensar" pela mensagem de erro
-         setMessages((prev) => [
+        
+        setMessages((prev) => [
           ...prev.slice(0, -1),
           errorResponse,
         ]);
