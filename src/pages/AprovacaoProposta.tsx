@@ -8,6 +8,7 @@ import { CheckCircle, XCircle } from "lucide-react";
 import { useState } from "react";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
+import { useWebhookTrigger } from "@/hooks/useWebhookTrigger";
 
 const propostaSchema = z.object({
   nomeEvento: z.string().trim().min(1, "Nome do evento é obrigatório").max(200),
@@ -27,8 +28,9 @@ const AprovacaoProposta = () => {
   const [lucroLiquido, setLucroLiquido] = useState("");
   const [margemLucro, setMargemLucro] = useState("");
   const { toast } = useToast();
+  const { trigger } = useWebhookTrigger();
 
-  const handleAprovar = () => {
+  const handleAprovar = async () => {
     const validation = propostaSchema.safeParse({
       nomeEvento,
       dataEvento,
@@ -48,11 +50,27 @@ const AprovacaoProposta = () => {
 
     console.log("Proposta aprovada", validation.data);
     toast({ title: "Proposta aprovada com sucesso!" });
+    
+    // Disparar webhook Make
+    await trigger('proposta_aprovada', {
+      nome_evento: validation.data.nomeEvento,
+      data_evento: validation.data.dataEvento,
+      local: validation.data.localEvento,
+      valor_final: validation.data.valorFinal,
+      valor_minimo: validation.data.valorMinimo
+    });
   };
 
-  const handleRecusar = () => {
+  const handleRecusar = async () => {
     console.log("Proposta recusada");
     toast({ title: "Proposta recusada" });
+    
+    // Disparar webhook Make
+    await trigger('proposta_recusada', {
+      nome_evento: nomeEvento,
+      data_evento: dataEvento,
+      local: localEvento
+    });
   };
 
   return (
