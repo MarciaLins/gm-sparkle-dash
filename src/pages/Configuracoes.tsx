@@ -6,28 +6,58 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { ExternalLink } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+
+interface MakeWebhook {
+  id: string;
+  nome: string;
+  evento: string;
+  webhook_url: string;
+  ativo: boolean;
+  user_id: string;
+  created_at: string;
+  ultima_execucao: string | null;
+  total_execucoes: number;
+}
 
 const Configuracoes = () => {
   const { toast } = useToast();
 
-  const { data: webhooks } = useQuery({
-    queryKey: ['make-webhooks'],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
-      
-      const { data, error } = await supabase
-        .from('make_webhooks')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      return data;
+  // Dados mockados até a migração ser executada
+  const webhooks: MakeWebhook[] = [
+    {
+      id: '1',
+      nome: 'Webhook Make Principal',
+      evento: 'nova_transacao',
+      webhook_url: 'https://hook.us2.make.com/w9x6b127jopvrsyudcvj5ohydiktbkgt',
+      ativo: true,
+      user_id: '1',
+      created_at: new Date().toISOString(),
+      ultima_execucao: null,
+      total_execucoes: 0
+    },
+    {
+      id: '2',
+      nome: 'Webhook Make Principal',
+      evento: 'proposta_aprovada',
+      webhook_url: 'https://hook.us2.make.com/w9x6b127jopvrsyudcvj5ohydiktbkgt',
+      ativo: true,
+      user_id: '1',
+      created_at: new Date().toISOString(),
+      ultima_execucao: null,
+      total_execucoes: 0
+    },
+    {
+      id: '3',
+      nome: 'Webhook Make Principal',
+      evento: 'proposta_recusada',
+      webhook_url: 'https://hook.us2.make.com/w9x6b127jopvrsyudcvj5ohydiktbkgt',
+      ativo: true,
+      user_id: '1',
+      created_at: new Date().toISOString(),
+      ultima_execucao: null,
+      total_execucoes: 0
     }
-  });
+  ];
 
   const handleSave = () => {
     toast({

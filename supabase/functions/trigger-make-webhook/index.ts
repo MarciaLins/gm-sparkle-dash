@@ -1,4 +1,4 @@
-import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
     // Buscar webhook ativo para este evento
     const { data: webhooks, error: webhookError } = await supabase
       .from('make_webhooks')
-      .select('webhook_url')
+      .select('webhook_url, total_execucoes')
       .eq('user_id', user.id)
       .eq('evento', evento)
       .eq('ativo', true)
@@ -123,7 +123,8 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('[Webhook] Erro:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+    return new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
