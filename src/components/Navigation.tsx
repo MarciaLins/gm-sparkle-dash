@@ -20,7 +20,7 @@ export const Navigation = () => {
       <div className="mb-8">
         <h2 className="text-xl font-bold">
           <span className="bg-gradient-to-r from-accent to-amber-400 bg-clip-text text-transparent">
-            GM Produtora
+            Filipe Lima
           </span>
         </h2>
       </div>

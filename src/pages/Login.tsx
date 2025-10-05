@@ -47,7 +47,7 @@ const Login = () => {
         <CardHeader>
           <CardTitle className="text-2xl">
             <span className="bg-gradient-to-r from-accent to-amber-400 bg-clip-text text-transparent">
-              GM Produtora
+              Filipe Lima
             </span>
           </CardTitle>
           <CardDescription>
