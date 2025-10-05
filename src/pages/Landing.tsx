@@ -6,6 +6,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { MessageCircle, Send, Quote } from "lucide-react";
 
+// URLs de Imagens de placeholder para evitar erros de compilação
+const logoFilipeLima = "https://placehold.co/100x100/1A1B1E/FCB900?text=FL";
+const filipeLimaPhoto = "https://placehold.co/450x600/1A1B1E/FCB900?text=Filipe+Lima";
+
 interface Message {
   id: number;
   text: string;
@@ -18,43 +22,105 @@ export default function Landing() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
-      text: "Olá! Fico feliz com seu interesse. Para qual data e tipo de evento seria?",
+      text: "Olá! Fico feliz com o seu interesse. Para qual data e tipo de evento seria?",
       sender: "sofia",
       timestamp: new Date(),
     },
   ]);
   const [input, setInput] = useState("");
 
-  const handleSend = () => {
+  // Este será o ÚNICO local a ser alterado mais tarde
+  const MAKE_WEBHOOK_URL = "COLE_A_NOVA_URL_DO_MAKE.COM_AQUI";
+
+  const handleSend = async () => {
     if (input.trim()) {
-      const newMessage: Message = {
+      const userMessage: Message = {
         id: messages.length + 1,
         text: input,
         sender: "user",
         timestamp: new Date(),
       };
-      setMessages([...messages, newMessage]);
+      
+      setMessages((prev) => [
+        ...prev,
+        userMessage,
+        {
+          id: prev.length + 2,
+          text: "Sofia está a pensar...",
+          sender: "sofia",
+          timestamp: new Date(),
+        },
+      ]);
+      const currentInput = input;
       setInput("");
 
-      setTimeout(() => {
-        const botResponse: Message = {
-          id: messages.length + 2,
-          text: "Entendi! Estou processando sua solicitação...",
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 25000); // Espera 25 segundos
+
+      try {
+        const response = await fetch(MAKE_WEBHOOK_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ message: currentInput }),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          throw new Error(`Erro de HTTP! Status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const sofiaMessageText = data.reply || "Recebi uma resposta, mas o formato é inválido.";
+        
+        const sofiaResponse: Message = {
+          id: messages.length + 3,
+          text: sofiaMessageText,
           sender: "sofia",
           timestamp: new Date(),
         };
-        setMessages((prev) => [...prev, botResponse]);
-      }, 1000);
+
+        setMessages((prev) => [
+          ...prev.slice(0, -1),
+          sofiaResponse,
+        ]);
+
+      } catch (error) {
+        clearTimeout(timeoutId);
+        let errorMessage = "Desculpe, estou com um problema técnico. Tente novamente mais tarde.";
+        if (error.name === 'AbortError') {
+          errorMessage = "Desculpe, demorei muito para pensar. Pode tentar reformular a sua pergunta?";
+        }
+        console.error("Erro:", error);
+        
+        const errorResponse: Message = {
+          id: messages.length + 3,
+          text: errorMessage,
+          sender: "sofia",
+          timestamp: new Date(),
+        };
+         setMessages((prev) => [
+          ...prev.slice(0, -1),
+          errorResponse,
+        ]);
+      }
     }
   };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Header Section */}
+      {/* Secção do Cabeçalho */}
       <header className="bg-card border-b border-border py-6 px-4 md:px-8">
         <div className="max-w-7xl mx-auto flex items-center gap-6">
-          <div className="w-16 h-16 bg-accent/10 rounded-lg flex items-center justify-center border border-accent/20">
-            <span className="text-2xl font-bold text-accent">FL</span>
+          <div className="w-24 h-24 rounded-lg overflow-hidden">
+            <img 
+              src={logoFilipeLima} 
+              alt="Logótipo Filipe Lima" 
+              className="w-full h-full object-contain"
+            />
           </div>
           <div>
             <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-accent to-amber-400 bg-clip-text text-transparent">
@@ -67,22 +133,29 @@ export default function Landing() {
         </div>
       </header>
 
-      {/* About Section */}
+      {/* Secção Sobre */}
       <section className="py-20 px-4 md:px-8 bg-card">
         <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center">
-          <div className="order-2 md:order-1">
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-accent to-amber-400 bg-clip-text text-transparent">
+          <div className="order-2 md:order-1 relative">
+            <div className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none">
+              <img 
+                src={logoFilipeLima} 
+                alt="Marca d'água" 
+                className="w-full h-auto object-contain"
+              />
+            </div>
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-accent to-amber-400 bg-clip-text text-transparent relative z-10">
               Sobre Filipe Lima
             </h2>
-            <p className="text-lg text-muted-foreground leading-relaxed mb-4">
+            <p className="text-lg text-muted-foreground leading-relaxed mb-4 relative z-10">
               Com mais de 13 anos de experiência, Filipe Lima é um violinista renomado que já encantou
               milhares de pessoas em casamentos, eventos corporativos e apresentações especiais.
             </p>
-            <p className="text-lg text-muted-foreground leading-relaxed mb-4">
-              Sua versatilidade musical abrange desde o clássico erudito até músicas contemporâneas,
+            <p className="text-lg text-muted-foreground leading-relaxed mb-4 relative z-10">
+              A sua versatilidade musical abrange desde o clássico erudito até músicas contemporâneas,
               sempre com a elegância e sensibilidade que transformam momentos em memórias inesquecíveis.
             </p>
-            <p className="text-lg text-muted-foreground leading-relaxed">
+            <p className="text-lg text-muted-foreground leading-relaxed relative z-10">
               Cada apresentação é cuidadosamente personalizada para refletir a essência do seu evento,
               criando uma atmosfera única e sofisticada.
             </p>
@@ -90,7 +163,7 @@ export default function Landing() {
           <div className="order-1 md:order-2">
             <div className="relative aspect-[3/4] rounded-lg overflow-hidden shadow-[0_0_40px_rgba(252,211,77,0.2)]">
               <img
-                src="https://images.unsplash.com/photo-1465847899084-d164df4dedc6?auto=format&fit=crop&w=800&q=80"
+                src={filipeLimaPhoto}
                 alt="Filipe Lima Violinista"
                 className="w-full h-full object-cover"
               />
@@ -99,18 +172,18 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Testimonials Section */}
+      {/* Secção de Testemunhos */}
       <section className="py-20 px-4 md:px-8 bg-background">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 bg-gradient-to-r from-accent to-amber-400 bg-clip-text text-transparent">
-            O Que Dizem Nossos Clientes
+            O Que Dizem os Nossos Clientes
           </h2>
           <div className="grid md:grid-cols-3 gap-8">
             {[
               {
                 name: "Maria & João",
                 event: "Casamento",
-                text: "O Filipe transformou nosso casamento em algo mágico. Cada nota tocada era perfeita e emocionante. Nossos convidados não param de elogiar!",
+                text: "O Filipe transformou o nosso casamento em algo mágico. Cada nota tocada era perfeita e emocionante. Os nossos convidados não param de elogiar!",
               },
               {
                 name: "Ricardo Santos",
@@ -140,16 +213,21 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Floating Chat Button */}
-      <Button
-        onClick={() => setChatOpen(true)}
-        size="icon"
-        className="fixed bottom-6 right-6 h-16 w-16 rounded-full bg-gradient-to-r from-accent to-amber-400 hover:shadow-[0_0_40px_rgba(252,211,77,0.4)] transition-all duration-300 z-50"
-      >
-        <MessageCircle className="h-8 w-8 text-primary-foreground" />
-      </Button>
+      {/* Botão de Chat Flutuante */}
+      <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3">
+        <div className="bg-accent text-accent-foreground px-4 py-2 rounded-lg shadow-lg animate-fade-in hidden md:block">
+          <p className="text-sm font-medium whitespace-nowrap">Converse com a Sofia!</p>
+        </div>
+        <Button
+          onClick={() => setChatOpen(true)}
+          size="icon"
+          className="h-20 w-20 rounded-full bg-gradient-to-r from-accent to-amber-400 hover:shadow-[0_0_40px_rgba(252,211,77,0.6)] transition-all duration-300 hover:scale-110"
+        >
+          <MessageCircle className="h-10 w-10 text-primary-foreground" />
+        </Button>
+      </div>
 
-      {/* Chat Dialog */}
+      {/* Diálogo do Chat */}
       <Dialog open={chatOpen} onOpenChange={setChatOpen}>
         <DialogContent className="sm:max-w-[500px] h-[600px] flex flex-col p-0 bg-card border-accent/20">
           <DialogHeader className="border-b border-border p-6">
@@ -189,7 +267,7 @@ export default function Landing() {
 
           <div className="p-4 border-t border-border flex gap-2">
             <Input
-              placeholder="Digite sua mensagem aqui..."
+              placeholder="Digite a sua mensagem aqui..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={(e) => e.key === "Enter" && handleSend()}
