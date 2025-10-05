@@ -24,7 +24,7 @@ export default function Landing() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
-      text: "Olá! Fico feliz com o seu interesse. Para qual data e tipo de evento seria?",
+      text: "Olá! Seja muito bem-vindo(a) à GM Produções. Eu sou Sofia, a assistente virtual de Filipe Lima. É um prazer atendê-lo(a)! Como posso ajudar você hoje com seu evento ou apresentação musical? Tenho informações sobre disponibilidade, tipos de serviços e posso coletar os dados iniciais para um orçamento.",
       sender: "sofia",
       timestamp: new Date(),
     },
