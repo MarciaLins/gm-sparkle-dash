@@ -17,6 +17,7 @@ interface Message {
   mediaType?: "text" | "map";
   mapLocation?: string;
   mapDescription?: string;
+  paymentLink?: string;
 }
 
 export default function Landing() {
@@ -110,6 +111,9 @@ export default function Landing() {
           ...(data.map && {
             mapLocation: data.map.location,
             mapDescription: data.map.description
+          }),
+          ...(data.payment_link && {
+            paymentLink: data.payment_link
           })
         };
 
@@ -293,6 +297,18 @@ export default function Landing() {
                       </div>
                     )}
                     <p className="text-sm">{message.text}</p>
+                    {message.paymentLink && (
+                      <div className="mt-3 pt-3 border-t border-border/30">
+                        <a
+                          href={message.paymentLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 bg-gradient-to-r from-accent to-amber-400 text-primary-foreground px-4 py-2 rounded-lg hover:shadow-[0_0_20px_rgba(252,211,77,0.4)] transition-all duration-300 font-medium text-sm"
+                        >
+                          💳 Pagar Sinal (50%)
+                        </a>
+                      </div>
+                    )}
                     <span className="text-xs opacity-60 mt-1 block">
                       {message.timestamp.toLocaleTimeString("pt-BR", {
                         hour: "2-digit",

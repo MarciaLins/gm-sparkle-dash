@@ -21,6 +21,7 @@ Meu papel é facilitar o contato entre potenciais clientes e Filipe Lima, ajudan
 - Explicar os serviços oferecidos (violino solo, banda completa, DJ)
 - Coletar informações iniciais para orçamentos personalizados
 - Agendar conversas com Filipe quando necessário
+- **GERAR LINKS DE PAGAMENTO quando o cliente confirmar o pacote**
 
 SOBRE FILIPE LIMA
 - Violinista profissional com mais de 13 anos de experiência
@@ -48,11 +49,20 @@ SERVIÇOS OFERECIDOS
 - DJ para eventos
 - Repertório personalizado sob consulta
 
+**PROCESSO DE PAGAMENTO**
+Quando o cliente CONFIRMAR que deseja contratar um pacote/serviço:
+1. Use a ferramenta create_payment_link para gerar o link de pagamento
+2. Informe que coletará os dados necessários
+3. Após gerar o link, envie uma mensagem amigável como:
+   "Perfeito! 🖤 Segue o link seguro para sua reserva. Clique no botão abaixo para pagar o sinal (50% do valor) e garantir a data. Aceitamos cartão e PIX."
+4. O link aparecerá automaticamente como um botão na mensagem
+
 IMPORTANTE
 - Nunca prometa valores específicos sem consultar Filipe
 - Sempre mantenha tom profissional mas acessível
 - Se não souber algo, seja honesta e ofereça que Filipe retornará o contato
 - Priorize a experiência e satisfação do cliente
+- **SEMPRE gere o link de pagamento quando o cliente confirmar a contratação**
 
 Você está aqui para ser a primeira impressão positiva de Filipe Lima e facilitar o caminho para que cada evento seja um sucesso inesquecível.`;
 
@@ -202,6 +212,48 @@ serve(async (req) => {
               },
               required: ["action", "data"]
             }
+          },
+          {
+            name: "create_payment_link",
+            description: "Cria um link de pagamento Stripe Connect quando o cliente confirma a contratação de um pacote. O link permite pagamento com cartão ou PIX de 50% do valor como sinal.",
+            parameters: {
+              type: "OBJECT",
+              properties: {
+                nome_cliente: {
+                  type: "STRING",
+                  description: "Nome completo do cliente"
+                },
+                email_cliente: {
+                  type: "STRING",
+                  description: "Email do cliente"
+                },
+                telefone_cliente: {
+                  type: "STRING",
+                  description: "Telefone do cliente"
+                },
+                pacote_selecionado: {
+                  type: "STRING",
+                  description: "Nome do pacote/serviço contratado"
+                },
+                valor_total: {
+                  type: "NUMBER",
+                  description: "Valor total do pacote em reais"
+                },
+                tipo_evento: {
+                  type: "STRING",
+                  description: "Tipo de evento (casamento, formatura, etc)"
+                },
+                data_evento: {
+                  type: "STRING",
+                  description: "Data do evento no formato YYYY-MM-DD"
+                },
+                local_evento: {
+                  type: "STRING",
+                  description: "Local onde será o evento"
+                }
+              },
+              required: ["nome_cliente", "email_cliente", "pacote_selecionado", "valor_total"]
+            }
           }
         ]
       }
@@ -304,6 +356,7 @@ serve(async (req) => {
     const parts = geminiData.candidates?.[0]?.content?.parts || [];
     let sofiaReply = "";
     let mapData = null;
+    let paymentLink = null;
     
     for (const part of parts) {
       if (part.text) {
@@ -337,6 +390,48 @@ serve(async (req) => {
             sofiaReply += `\n\n✅ ${result.message}`;
           } else {
             sofiaReply += `\n\n❌ Erro: ${result.error}`;
+          }
+        } else if (functionCall.name === "create_payment_link") {
+          console.log("Creating payment link:", functionCall.args);
+          try {
+            // ID da conta conectada Stripe (substitua pelo ID real)
+            const CONNECTED_ACCOUNT_ID = "acct_1SbZuBRxWnPP5B1G"; // Substituir pelo ID real do usuário
+            
+            const checkoutResponse = await fetch(
+              `${SUPABASE_URL}/functions/v1/create-checkout-connect`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+                },
+                body: JSON.stringify({
+                  nome_cliente: functionCall.args.nome_cliente,
+                  email_cliente: functionCall.args.email_cliente,
+                  telefone_cliente: functionCall.args.telefone_cliente || "",
+                  pacote_selecionado: functionCall.args.pacote_selecionado,
+                  valor_total: functionCall.args.valor_total,
+                  tipo_evento: functionCall.args.tipo_evento || "",
+                  data_evento: functionCall.args.data_evento || null,
+                  local_evento: functionCall.args.local_evento || "",
+                  conversation_id: conversationId,
+                  connected_account_id: CONNECTED_ACCOUNT_ID,
+                }),
+              }
+            );
+
+            if (!checkoutResponse.ok) {
+              const errorText = await checkoutResponse.text();
+              console.error("Erro ao criar checkout:", errorText);
+              sofiaReply += "\n\n❌ Não consegui gerar o link de pagamento. Entre em contato conosco.";
+            } else {
+              const checkoutData = await checkoutResponse.json();
+              paymentLink = checkoutData.checkout_url;
+              console.log("Link de pagamento criado:", paymentLink);
+            }
+          } catch (error) {
+            console.error("Erro ao criar link de pagamento:", error);
+            sofiaReply += "\n\n❌ Não consegui gerar o link de pagamento. Entre em contato conosco.";
           }
         }
       }
@@ -403,7 +498,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         reply: sofiaReply,
-        ...(mapData && { map: mapData })
+        ...(mapData && { map: mapData }),
+        ...(paymentLink && { payment_link: paymentLink })
       }),
       { 
         headers: { 

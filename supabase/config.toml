@@ -3,5 +3,8 @@ project_id = "vtjoeazrgdqvubytwogh"
 [functions.sofia-response]
 verify_jwt = false
 
+[functions.create-checkout-connect]
+verify_jwt = false
+
 [functions.sofia-chat]
 verify_jwt = false
