@@ -52,10 +52,9 @@ SERVIÇOS OFERECIDOS
 **PROCESSO DE PAGAMENTO**
 Quando o cliente CONFIRMAR que deseja contratar um pacote/serviço:
 1. Use a ferramenta create_payment_link para gerar o link de pagamento
-2. Informe que coletará os dados necessários
-3. Após gerar o link, envie uma mensagem amigável como:
-   "Perfeito! 🖤 Segue o link seguro para sua reserva. Clique no botão abaixo para pagar o sinal (50% do valor) e garantir a data. Aceitamos cartão e PIX."
-4. O link aparecerá automaticamente como um botão na mensagem
+2. O sistema automaticamente responderá com a mensagem amigável e o link
+3. O link aparecerá como um botão para o cliente clicar
+4. O pagamento pode ser feito via Pix ou cartão de crédito de forma segura
 
 IMPORTANTE
 - Nunca prometa valores específicos sem consultar Filipe
@@ -215,7 +214,7 @@ serve(async (req) => {
           },
           {
             name: "create_payment_link",
-            description: "Cria um link de pagamento Stripe Connect quando o cliente confirma a contratação de um pacote. O link permite pagamento com cartão ou PIX de 50% do valor como sinal.",
+            description: "Cria um link de pagamento seguro via Mercado Pago para o cliente. Use quando o cliente confirmar o tipo de evento e o pacote escolhido.",
             parameters: {
               type: "OBJECT",
               properties: {
@@ -394,16 +393,12 @@ serve(async (req) => {
         } else if (functionCall.name === "create_payment_link") {
           console.log("Creating payment link:", functionCall.args);
           try {
-            // ID da conta conectada Stripe (substitua pelo ID real)
-            const CONNECTED_ACCOUNT_ID = "acct_1SbZuBRxWnPP5B1G"; // Substituir pelo ID real do usuário
-            
             const checkoutResponse = await fetch(
-              `${SUPABASE_URL}/functions/v1/create-checkout-connect`,
+              `${SUPABASE_URL}/functions/v1/create-mercadopago-preference`,
               {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",
-                  "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
                 },
                 body: JSON.stringify({
                   nome_cliente: functionCall.args.nome_cliente,
@@ -414,24 +409,23 @@ serve(async (req) => {
                   tipo_evento: functionCall.args.tipo_evento || "",
                   data_evento: functionCall.args.data_evento || null,
                   local_evento: functionCall.args.local_evento || "",
-                  conversation_id: conversationId,
-                  connected_account_id: CONNECTED_ACCOUNT_ID,
                 }),
               }
             );
 
             if (!checkoutResponse.ok) {
               const errorText = await checkoutResponse.text();
-              console.error("Erro ao criar checkout:", errorText);
-              sofiaReply += "\n\n❌ Não consegui gerar o link de pagamento. Entre em contato conosco.";
+              console.error("Erro ao criar preferência Mercado Pago:", errorText);
+              sofiaReply += "\n\nDesculpe, houve um erro ao gerar o link de pagamento. Tente novamente.";
             } else {
               const checkoutData = await checkoutResponse.json();
               paymentLink = checkoutData.checkout_url;
               console.log("Link de pagamento criado:", paymentLink);
+              sofiaReply = "Perfeito! 💫 Para garantir a data e fechar sua reserva, basta clicar no link abaixo e fazer o pagamento via Pix ou cartão de crédito. Assim que o pagamento for confirmado, você recebe sua confirmação de agendamento!";
             }
           } catch (error) {
             console.error("Erro ao criar link de pagamento:", error);
-            sofiaReply += "\n\n❌ Não consegui gerar o link de pagamento. Entre em contato conosco.";
+            sofiaReply += "\n\nDesculpe, houve um erro ao gerar o link de pagamento. Tente novamente.";
           }
         }
       }

@@ -3,7 +3,7 @@ project_id = "vtjoeazrgdqvubytwogh"
 [functions.sofia-response]
 verify_jwt = false
 
-[functions.create-checkout-connect]
+[functions.create-mercadopago-preference]
 verify_jwt = false
 
 [functions.sofia-chat]
