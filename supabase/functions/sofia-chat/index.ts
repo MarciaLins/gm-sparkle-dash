@@ -9,8 +9,6 @@ const corsHeaders = {
 const GEMINI_API_KEY = Deno.env.get('GOOGLE_GEMINI_API_KEY');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const MAKE_WEBHOOK_DASHBOARD = "https://hook.us2.make.com/q9j4itjdinh8etuqontbz7yewcom5rzv";
-const MAKE_WEBHOOK_LANDING = "https://hook.us2.make.com/ngw41roxe6sx7txxqmfn8mae305618tt";
 
 const SOFIA_SYSTEM_PROMPT_CLIENT = `IDENTIDADE E MISSÃO PRINCIPAL
 Você é Sofia, assistente do violinista Filipe Lima, especializada em gestão de eventos musicais e apresentações artísticas.
@@ -433,46 +431,6 @@ serve(async (req) => {
     
     if (!sofiaReply) {
       sofiaReply = "Desculpe, não consegui processar sua mensagem.";
-    }
-
-    // Notificar Make.com
-    // Landing page: sempre notifica (vendas)
-    // Dashboard privado: sempre notifica (gestão interna)
-    const shouldNotify = context === "landing_page" || context === "private_dashboard";
-    
-    if (shouldNotify) {
-      const webhookUrl = context === "landing_page" ? MAKE_WEBHOOK_LANDING : MAKE_WEBHOOK_DASHBOARD;
-      console.log('Notificando Make.com...', { webhookUrl, context });
-      
-      try {
-        const webhookResponse = await fetch(webhookUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: context === "landing_page" ? 'nova_conversa_cliente' : 'sofia_action_detected',
-            message: message,
-            sofia_response: sofiaReply,
-            user_email: user_email,
-            timestamp: timestamp,
-            context: context
-          })
-        });
-        
-        console.log('Make.com webhook response:', {
-          status: webhookResponse.status,
-          ok: webhookResponse.ok,
-          statusText: webhookResponse.statusText
-        });
-        
-        if (!webhookResponse.ok) {
-          const errorText = await webhookResponse.text();
-          console.error('Make.com webhook error:', errorText);
-        } else {
-          console.log('Make.com notificado com sucesso!');
-        }
-      } catch (makeError) {
-        console.error('Make.com notification failed:', makeError);
-      }
     }
 
     // Salvar no banco de dados

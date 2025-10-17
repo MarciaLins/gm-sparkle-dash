@@ -74,21 +74,6 @@ const Propostas = () => {
 
       if (error) throw error;
 
-      // Se aprovado, enviar ID para o webhook do Make.com
-      if (novoStatus === "Aprovado") {
-        try {
-          await fetch("https://hook.us2.make.com/q9j4itjdinh8etuqontbz7yewcom5rzv", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ proposta_id: id }),
-          });
-        } catch (webhookError) {
-          console.error("Erro ao enviar para webhook:", webhookError);
-        }
-      }
-
       toast({
         title: `Proposta ${novoStatus.toLowerCase()}!`,
         description: "O status foi atualizado com sucesso.",
